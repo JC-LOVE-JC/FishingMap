@@ -127,7 +127,9 @@ export function DestinationPanel({
         ) ?? null
       : null;
   const mobilePanelHeightClass =
-    mode === "transport" ? "max-h-[56vh] min-h-[19rem]" : "max-h-[68vh] min-h-[14rem]";
+    mode === "transport"
+      ? "h-[50vh] min-h-[20rem] max-h-[32rem]"
+      : "max-h-[68vh] min-h-[14rem]";
 
   return (
     <>

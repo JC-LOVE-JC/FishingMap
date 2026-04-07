@@ -36,6 +36,7 @@ export function TransportForm({
   value
 }: TransportFormProps) {
   const { language, t } = useLanguage();
+  const ActiveModeIcon = modeIcons[value.mode];
 
   function updateField<Key extends keyof TransportSegment>(
     key: Key,
@@ -62,22 +63,13 @@ export function TransportForm({
             {fromLabel} {t("map.to")} {toLabel}
           </p>
         </div>
-        <Badge>{t("transport.routeEditor")}</Badge>
+        <Badge className={cn("inline-flex items-center gap-2", TRANSPORT_MODE_META[value.mode].accentClassName)}>
+          <ActiveModeIcon className="size-3.5" />
+          {getTransportModeLabel(value.mode, language)}
+        </Badge>
       </div>
 
       <section className="panel-section space-y-4 rounded-[28px] p-4">
-        <div className="space-y-2">
-          <label className="eyebrow" htmlFor="segmentName">
-            {t("transport.name")}
-          </label>
-          <Input
-            id="segmentName"
-            onChange={(event) => updateField("name", event.target.value)}
-            placeholder={t("transport.namePlaceholder")}
-            value={value.name}
-          />
-        </div>
-
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <label className="eyebrow" htmlFor="departureTime">
@@ -102,6 +94,18 @@ export function TransportForm({
               value={value.duration || ""}
             />
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="eyebrow" htmlFor="segmentName">
+            {t("transport.name")}
+          </label>
+          <Input
+            id="segmentName"
+            onChange={(event) => updateField("name", event.target.value)}
+            placeholder={t("transport.namePlaceholder")}
+            value={value.name}
+          />
         </div>
       </section>
 
