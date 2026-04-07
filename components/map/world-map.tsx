@@ -92,14 +92,6 @@ export function WorldMap({
     setMapZoom(Number(nextZoom.toFixed(3)));
   }
 
-  function syncMapZoomFromMap(fallbackZoom?: number) {
-    const nextZoom = mapRef.current?.getZoom() ?? fallbackZoom;
-
-    if (typeof nextZoom === "number" && !Number.isNaN(nextZoom)) {
-      syncMapZoom(nextZoom);
-    }
-  }
-
   useEffect(() => {
     if (!focusTarget || !mapRef.current) {
       return;
@@ -218,23 +210,20 @@ export function WorldMap({
         sky={MAP_SKY}
         style={{ height: "100%", width: "100%" }}
         onMove={(event) => {
-          syncMapZoomFromMap(event.viewState.zoom);
+          syncMapZoom(event.viewState.zoom);
         }}
         onMoveEnd={(event) => {
-          syncMapZoomFromMap(event.viewState.zoom);
+          syncMapZoom(event.viewState.zoom);
         }}
         onZoom={(event) => {
-          syncMapZoomFromMap(event.viewState.zoom);
+          syncMapZoom(event.viewState.zoom);
         }}
         onZoomEnd={(event) => {
-          syncMapZoomFromMap(event.viewState.zoom);
-        }}
-        onRender={() => {
-          syncMapZoomFromMap();
+          syncMapZoom(event.viewState.zoom);
         }}
         onLoad={() => {
           mapRef.current?.getMap().setProjection({ type: "globe" });
-          syncMapZoomFromMap(INITIAL_VIEW_STATE.zoom);
+          syncMapZoom(mapRef.current?.getZoom() ?? INITIAL_VIEW_STATE.zoom);
         }}
         onClick={(event) => {
           if (!addMode) {
@@ -529,10 +518,10 @@ function TransportIcon({ mode }: { mode: TransportMode }) {
 }
 
 function getTransportScale(zoom: number) {
-  const minScale = 0.1;
+  const minScale = 0.18;
   const maxScale = 1;
-  const normalized = Math.max(0, Math.min(1, (zoom - 2.4) / 5.9));
-  const eased = normalized ** 1.65;
+  const normalized = Math.max(0, Math.min(1, (zoom - 2.2) / 6.2));
+  const eased = normalized ** 1.35;
   return Math.max(minScale, Math.min(maxScale, eased * (maxScale - minScale) + minScale));
 }
 
