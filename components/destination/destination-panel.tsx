@@ -127,22 +127,6 @@ export function DestinationPanel({
     WATER_TYPE_META[
       draftDestination?.waterType || transportTarget?.waterType || selectedDestination?.waterType || "saltwater"
     ];
-  const hasGuideOrBoatInfo = Boolean(
-    selectedDestination?.guideInfo?.name?.trim() ||
-      selectedDestination?.guideInfo?.contact?.trim() ||
-      selectedDestination?.boatInfo?.boatName?.trim() ||
-      selectedDestination?.boatInfo?.length?.trim() ||
-      selectedDestination?.boatInfo?.boatType?.trim() ||
-      selectedDestination?.boatInfo?.engineSetup?.trim() ||
-      selectedDestination?.boatInfo?.maxAnglers ||
-      selectedDestination?.boatInfo?.fightingChair ||
-      selectedDestination?.boatInfo?.liveBaitTank ||
-      selectedDestination?.boatInfo?.outriggers ||
-      selectedDestination?.boatInfo?.birdRadar ||
-      selectedDestination?.boatInfo?.tubes ||
-      selectedDestination?.boatInfo?.hasCabin ||
-      selectedDestination?.boatInfo?.hasToilet
-  );
   const transportOrigin =
     transportTarget && selectedExpedition
       ? selectedExpedition.destinations.find(
@@ -271,6 +255,109 @@ export function DestinationPanel({
                 </div>
               </div>
 
+              <details className="panel-section group overflow-hidden rounded-[28px]" open>
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 marker:hidden">
+                  <div>
+                    <p className="eyebrow">{t("overview.guideBoatInfo")}</p>
+                    <p className="mt-2 text-sm text-white/62">
+                      {language === "zh"
+                        ? "包含向导联系人与船只基础规格。"
+                        : "Includes guide contact and the core boat setup."}
+                    </p>
+                  </div>
+                  <span className="rounded-full border border-white/10 bg-white/5 p-2 text-white/55 transition group-open:rotate-180">
+                    <ChevronDown className="size-4" />
+                  </span>
+                </summary>
+
+                <div className="grid gap-4 border-t border-white/8 px-5 pb-5 pt-4">
+                  <div className="rounded-[24px] border border-white/8 bg-[#07131d] p-4">
+                    <div className="flex items-center gap-2">
+                      <UserRound className="size-4 text-gold-200" />
+                      <p className="eyebrow">{t("overview.guide")}</p>
+                    </div>
+                    <div className="mt-4 grid gap-3 md:grid-cols-2">
+                      <div>
+                        <p className="text-[0.68rem] uppercase tracking-[0.18em] text-white/40">
+                          {t("overview.guideName")}
+                        </p>
+                        <p className="mt-2 text-sm text-white/82">
+                          {selectedDestination.guideInfo?.name || t("overview.notProvided")}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="flex items-center gap-2 text-[0.68rem] uppercase tracking-[0.18em] text-white/40">
+                          <Phone className="size-3.5" />
+                          {t("overview.contact")}
+                        </p>
+                        <p className="mt-2 text-sm text-white/82">
+                          {selectedDestination.guideInfo?.contact || t("overview.notProvided")}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-[24px] border border-white/8 bg-[#07131d] p-4">
+                    <div className="flex items-center gap-2">
+                      <Ship className="size-4 text-lagoon-300" />
+                      <p className="eyebrow">{t("overview.boatInfo")}</p>
+                    </div>
+                    <div className="mt-4 grid gap-3 md:grid-cols-2">
+                      <InfoField
+                        fallback={t("overview.notProvided")}
+                        label={t("overview.boatName")}
+                        value={selectedDestination.boatInfo?.boatName}
+                      />
+                      <InfoField
+                        fallback={t("overview.notProvided")}
+                        label={t("overview.length")}
+                        value={selectedDestination.boatInfo?.length}
+                      />
+                      <InfoField
+                        fallback={t("overview.notProvided")}
+                        label={t("overview.boatType")}
+                        value={selectedDestination.boatInfo?.boatType}
+                      />
+                      <InfoField
+                        fallback={t("overview.notProvided")}
+                        label={t("overview.maxAnglers")}
+                        value={
+                          selectedDestination.boatInfo?.maxAnglers
+                            ? String(selectedDestination.boatInfo.maxAnglers)
+                            : ""
+                        }
+                      />
+                      <div className="md:col-span-2">
+                        <InfoField
+                          fallback={t("overview.notProvided")}
+                          label={t("overview.engineSetup")}
+                          value={selectedDestination.boatInfo?.engineSetup}
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <p className="text-[0.68rem] uppercase tracking-[0.18em] text-white/40">
+                        {t("overview.features")}
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {buildBoatFeatures(selectedDestination, {
+                          notProvided: t("overview.notProvided"),
+                          fightingChair: t("overview.fightingChair"),
+                          liveBaitTank: t("overview.liveBaitTank"),
+                          outriggers: t("overview.outriggers"),
+                          birdRadar: t("overview.birdRadar"),
+                          tubes: t("overview.tubes"),
+                          cabin: t("overview.cabin"),
+                          toilet: t("overview.toilet")
+                        }).map((feature) => (
+                          <Badge key={feature}>{feature}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </details>
+
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="panel-section rounded-[24px] p-4">
                   <div className="flex items-center gap-2 text-gold-200">
@@ -300,104 +387,6 @@ export function DestinationPanel({
                   </p>
                 </div>
               ) : null}
-
-              <details className="panel-section group overflow-hidden rounded-[28px]" open={hasGuideOrBoatInfo}>
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 marker:hidden">
-                    <div>
-                      <p className="eyebrow">{t("overview.guideBoatInfo")}</p>
-                    </div>
-                    <span className="rounded-full border border-white/10 bg-white/5 p-2 text-white/55 transition group-open:rotate-180">
-                      <ChevronDown className="size-4" />
-                    </span>
-                  </summary>
-
-                  <div className="grid gap-4 border-t border-white/8 px-5 pb-5 pt-4">
-                      <div className="rounded-[24px] border border-white/8 bg-[#07131d] p-4">
-                        <div className="flex items-center gap-2">
-                          <UserRound className="size-4 text-gold-200" />
-                          <p className="eyebrow">{t("overview.guide")}</p>
-                        </div>
-                        <div className="mt-4 grid gap-3 md:grid-cols-2">
-                          <div>
-                            <p className="text-[0.68rem] uppercase tracking-[0.18em] text-white/40">
-                              {t("overview.guideName")}
-                            </p>
-                            <p className="mt-2 text-sm text-white/82">
-                              {selectedDestination.guideInfo?.name || t("overview.notProvided")}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="flex items-center gap-2 text-[0.68rem] uppercase tracking-[0.18em] text-white/40">
-                              <Phone className="size-3.5" />
-                              {t("overview.contact")}
-                            </p>
-                            <p className="mt-2 text-sm text-white/82">
-                              {selectedDestination.guideInfo?.contact || t("overview.notProvided")}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="rounded-[24px] border border-white/8 bg-[#07131d] p-4">
-                        <div className="flex items-center gap-2">
-                          <Ship className="size-4 text-lagoon-300" />
-                          <p className="eyebrow">{t("overview.boatInfo")}</p>
-                        </div>
-                        <div className="mt-4 grid gap-3 md:grid-cols-2">
-                          <InfoField
-                            label={t("overview.boatName")}
-                            fallback={t("overview.notProvided")}
-                            value={selectedDestination.boatInfo?.boatName}
-                          />
-                          <InfoField
-                            label={t("overview.length")}
-                            fallback={t("overview.notProvided")}
-                            value={selectedDestination.boatInfo?.length}
-                          />
-                          <InfoField
-                            label={t("overview.boatType")}
-                            fallback={t("overview.notProvided")}
-                            value={selectedDestination.boatInfo?.boatType}
-                          />
-                          <InfoField
-                            label={t("overview.maxAnglers")}
-                            fallback={t("overview.notProvided")}
-                            value={
-                              selectedDestination.boatInfo?.maxAnglers
-                                ? String(selectedDestination.boatInfo.maxAnglers)
-                                : ""
-                            }
-                          />
-                          <div className="md:col-span-2">
-                            <InfoField
-                              label={t("overview.engineSetup")}
-                              fallback={t("overview.notProvided")}
-                              value={selectedDestination.boatInfo?.engineSetup}
-                            />
-                          </div>
-                        </div>
-                        <div className="mt-4">
-                          <p className="text-[0.68rem] uppercase tracking-[0.18em] text-white/40">
-                            {t("overview.features")}
-                          </p>
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {buildBoatFeatures(selectedDestination, {
-                              notProvided: t("overview.notProvided"),
-                              fightingChair: t("overview.fightingChair"),
-                              liveBaitTank: t("overview.liveBaitTank"),
-                              outriggers: t("overview.outriggers"),
-                              birdRadar: t("overview.birdRadar"),
-                              tubes: t("overview.tubes"),
-                              cabin: t("overview.cabin"),
-                              toilet: t("overview.toilet")
-                            }).map((feature) => (
-                              <Badge key={feature}>{feature}</Badge>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                  </div>
-                </details>
 
               {selectedDestination.species.length ? (
                 <div className="panel-section rounded-[28px] p-5">

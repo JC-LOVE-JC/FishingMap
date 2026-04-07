@@ -6,6 +6,7 @@ import Map, { Layer, Marker, Popup, Source, type MapRef } from "@vis.gl/react-ma
 import { Minus, Navigation, Plus } from "lucide-react";
 
 import { DestinationMarker } from "@/components/map/destination-marker";
+import type { BottomSheetSnap } from "@/components/ui/bottom-sheet";
 import { getTransportModeLabel, useLanguage } from "@/lib/i18n";
 import { INITIAL_VIEW_STATE, MAP_MAX_ZOOM, MAP_MIN_ZOOM, MAP_SKY, MAP_STYLE } from "@/lib/map";
 import type { Destination, TimelineExpedition, TransportMode } from "@/lib/types";
@@ -17,6 +18,7 @@ type WorldMapProps = {
   draftCoordinates: { lat: number; lng: number } | null;
   focusTarget: Pick<Destination, "lat" | "lng"> | null;
   leftPanelCollapsed: boolean;
+  mobileDetailSheetSnap: BottomSheetSnap;
   onEditTransport: (destinationId: string) => void;
   onMapPlace: (coordinates: { lat: number; lng: number }) => void;
   onSelectDestination: (id: string) => void;
@@ -72,6 +74,7 @@ export function WorldMap({
   draftCoordinates,
   focusTarget,
   leftPanelCollapsed,
+  mobileDetailSheetSnap,
   onEditTransport,
   onMapPlace,
   onSelectDestination,
@@ -127,7 +130,7 @@ export function WorldMap({
         {
           duration: 1800,
           essential: true,
-          padding: getMapPadding(leftPanelCollapsed, rightPanelCollapsed, searchPanelCollapsed),
+          padding: getMapPadding(leftPanelCollapsed, rightPanelCollapsed, searchPanelCollapsed, mobileDetailSheetSnap),
           maxZoom: 9.8
         }
       );
@@ -138,10 +141,10 @@ export function WorldMap({
       center: [focusTarget.lng, focusTarget.lat],
       duration: 1800,
       essential: true,
-      padding: getMapPadding(leftPanelCollapsed, rightPanelCollapsed, searchPanelCollapsed),
+      padding: getMapPadding(leftPanelCollapsed, rightPanelCollapsed, searchPanelCollapsed, mobileDetailSheetSnap),
       zoom: Math.max(mapRef.current.getZoom(), 10.2)
     });
-  }, [focusTarget, leftPanelCollapsed, rightPanelCollapsed, searchPanelCollapsed, selectedExpedition]);
+  }, [focusTarget, leftPanelCollapsed, mobileDetailSheetSnap, rightPanelCollapsed, searchPanelCollapsed, selectedExpedition]);
 
   const routeSegments = useMemo(
     () =>
@@ -404,7 +407,11 @@ export function WorldMap({
       <div
         className={cn(
           "pointer-events-none absolute right-3 z-20 flex flex-col gap-2 sm:right-4 lg:bottom-6 lg:left-6 lg:right-auto xl:bottom-8",
-          rightPanelCollapsed ? "bottom-24 sm:bottom-28" : "bottom-[23rem] sm:bottom-[25rem]",
+          rightPanelCollapsed
+            ? "bottom-24 sm:bottom-28"
+            : mobileDetailSheetSnap === "expanded"
+              ? "bottom-[39rem] sm:bottom-[42rem]"
+              : "bottom-[23rem] sm:bottom-[25rem]",
           leftPanelCollapsed ? "xl:left-6" : "xl:left-[27.5rem]"
         )}
       >
@@ -540,7 +547,12 @@ function TransportIcon({ mode }: { mode: TransportMode }) {
   );
 }
 
-function getMapPadding(leftPanelCollapsed: boolean, rightPanelCollapsed: boolean, searchPanelCollapsed: boolean) {
+function getMapPadding(
+  leftPanelCollapsed: boolean,
+  rightPanelCollapsed: boolean,
+  searchPanelCollapsed: boolean,
+  mobileDetailSheetSnap: BottomSheetSnap
+) {
   if (typeof window === "undefined") {
     return {
       top: 156,
@@ -551,13 +563,18 @@ function getMapPadding(leftPanelCollapsed: boolean, rightPanelCollapsed: boolean
   }
 
   if (window.innerWidth < 1024) {
-    const bottomSheetOpen = !rightPanelCollapsed;
     const safeBottom = 24;
+    const mobileBottom =
+      mobileDetailSheetSnap === "expanded"
+        ? 520
+        : mobileDetailSheetSnap === "half"
+          ? 320
+          : 104;
 
     return {
       top: 144,
       right: (searchPanelCollapsed ? 18 : 250),
-      bottom: (bottomSheetOpen ? 360 : 110) + safeBottom,
+      bottom: mobileBottom + safeBottom,
       left: leftPanelCollapsed ? 18 : 244
     };
   }

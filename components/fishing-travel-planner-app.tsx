@@ -6,6 +6,7 @@ import seedDestinations from "@/data/destinations.json";
 import { DestinationPanel } from "@/components/destination/destination-panel";
 import { MapToolbar } from "@/components/map/map-toolbar";
 import { WorldMap } from "@/components/map/world-map";
+import type { BottomSheetSnap } from "@/components/ui/bottom-sheet";
 import { loadStoredDestinations, saveStoredDestinations } from "@/lib/client-storage";
 import { LANGUAGE_STORAGE_KEY, LanguageProvider, type Language } from "@/lib/i18n";
 import {
@@ -42,6 +43,7 @@ export function FishingTravelPlannerApp() {
   } | null>(null);
   const [timelineCollapsed, setTimelineCollapsed] = useState(false);
   const [detailsCollapsed, setDetailsCollapsed] = useState(false);
+  const [mobileDetailSheetSnap, setMobileDetailSheetSnap] = useState<BottomSheetSnap>("closed");
   const [searchCollapsed, setSearchCollapsed] = useState(false);
   const [mapPickMode, setMapPickMode] = useState(false);
   const [isResolvingLocation, setIsResolvingLocation] = useState(false);
@@ -78,6 +80,7 @@ export function FishingTravelPlannerApp() {
         if (!cancelled && window.innerWidth < 1024) {
           setTimelineCollapsed(true);
           setDetailsCollapsed(true);
+          setMobileDetailSheetSnap("closed");
           setSearchCollapsed(true);
         }
 
@@ -101,6 +104,7 @@ export function FishingTravelPlannerApp() {
         if (!cancelled && window.innerWidth < 1024) {
           setTimelineCollapsed(true);
           setDetailsCollapsed(true);
+          setMobileDetailSheetSnap("closed");
           setSearchCollapsed(true);
         }
       } finally {
@@ -224,15 +228,21 @@ export function FishingTravelPlannerApp() {
     });
   }
 
+  function openDetailsSheet(preferredSnap: BottomSheetSnap = "half") {
+    setDetailsCollapsed(false);
+
+    if (isMobileViewport()) {
+      setMobileDetailSheetSnap(preferredSnap);
+      setTimelineCollapsed(true);
+      setSearchCollapsed(true);
+    }
+  }
+
   function handleSelectDestination(id: string) {
     startTransition(() => {
       setSelectedId(id);
       setFormMode(null);
-      setDetailsCollapsed(false);
-      if (isMobileViewport()) {
-        setTimelineCollapsed(true);
-        setSearchCollapsed(true);
-      }
+      openDetailsSheet("half");
       setMapPickMode(false);
       setIsResolvingLocation(false);
       setTransportDraft(null);
@@ -244,11 +254,7 @@ export function FishingTravelPlannerApp() {
     startTransition(() => {
       setSelectedId(null);
       setFormMode("add");
-      setDetailsCollapsed(false);
-      if (isMobileViewport()) {
-        setTimelineCollapsed(true);
-        setSearchCollapsed(true);
-      }
+      openDetailsSheet("expanded");
       setMapPickMode(false);
       setIsResolvingLocation(false);
       setTransportDraft(null);
@@ -270,11 +276,7 @@ export function FishingTravelPlannerApp() {
 
     startTransition(() => {
       setSelectedId(null);
-      setDetailsCollapsed(false);
-      if (isMobileViewport()) {
-        setTimelineCollapsed(true);
-        setSearchCollapsed(true);
-      }
+      openDetailsSheet("expanded");
       setTransportDraft(null);
       setFormMode("add");
       setMapPickMode(false);
@@ -351,11 +353,7 @@ export function FishingTravelPlannerApp() {
         ...selectedDestination,
         photos: [...selectedDestination.photos]
       });
-      setDetailsCollapsed(false);
-      if (isMobileViewport()) {
-        setTimelineCollapsed(true);
-        setSearchCollapsed(true);
-      }
+      openDetailsSheet("expanded");
       setMapPickMode(false);
       setIsResolvingLocation(false);
       setTransportDraft(null);
@@ -373,11 +371,7 @@ export function FishingTravelPlannerApp() {
     startTransition(() => {
       setSelectedId(destinationId);
       setFormMode(null);
-      setDetailsCollapsed(false);
-      if (isMobileViewport()) {
-        setTimelineCollapsed(true);
-        setSearchCollapsed(true);
-      }
+      openDetailsSheet("half");
       setMapPickMode(false);
       setIsResolvingLocation(false);
       setDraftDestination(null);
@@ -533,6 +527,7 @@ export function FishingTravelPlannerApp() {
 
     if (!collapsed && isMobileViewport()) {
       setDetailsCollapsed(true);
+      setMobileDetailSheetSnap("closed");
       setSearchCollapsed(true);
     }
   }
@@ -540,7 +535,21 @@ export function FishingTravelPlannerApp() {
   function handleSetDetailsCollapsed(collapsed: boolean) {
     setDetailsCollapsed(collapsed);
 
+    if (isMobileViewport()) {
+      setMobileDetailSheetSnap(collapsed ? "closed" : "half");
+    }
+
     if (!collapsed && isMobileViewport()) {
+      setTimelineCollapsed(true);
+      setSearchCollapsed(true);
+    }
+  }
+
+  function handleMobileDetailSheetSnapChange(snap: BottomSheetSnap) {
+    setMobileDetailSheetSnap(snap);
+    setDetailsCollapsed(snap === "closed");
+
+    if (snap !== "closed" && isMobileViewport()) {
       setTimelineCollapsed(true);
       setSearchCollapsed(true);
     }
@@ -552,6 +561,7 @@ export function FishingTravelPlannerApp() {
     if (!collapsed && isMobileViewport()) {
       setTimelineCollapsed(true);
       setDetailsCollapsed(true);
+      setMobileDetailSheetSnap("closed");
     }
   }
 
@@ -570,6 +580,7 @@ export function FishingTravelPlannerApp() {
             : null
         }
         leftPanelCollapsed={timelineCollapsed}
+        mobileDetailSheetSnap={mobileDetailSheetSnap}
         rightPanelCollapsed={detailsCollapsed}
         selectedExpedition={selectedExpedition}
         focusTarget={focusTarget}
@@ -611,6 +622,8 @@ export function FishingTravelPlannerApp() {
         onDeleteDestination={handleDeleteDestination}
         onDeleteExpedition={handleDeleteExpedition}
         selectedExpeditionId={selectedExpeditionId}
+        mobileDetailSheetSnap={mobileDetailSheetSnap}
+        onMobileDetailSheetSnapChange={handleMobileDetailSheetSnapChange}
         setDetailsCollapsed={handleSetDetailsCollapsed}
         setTimelineCollapsed={handleSetTimelineCollapsed}
         timelineCollapsed={timelineCollapsed}
