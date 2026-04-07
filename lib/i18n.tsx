@@ -44,6 +44,25 @@ type TranslationKey =
   | "overview.targetSpecies"
   | "overview.techniques"
   | "overview.tags"
+  | "overview.guideBoatInfo"
+  | "overview.guide"
+  | "overview.guideName"
+  | "overview.contact"
+  | "overview.boatInfo"
+  | "overview.boatName"
+  | "overview.length"
+  | "overview.boatType"
+  | "overview.maxAnglers"
+  | "overview.engineSetup"
+  | "overview.features"
+  | "overview.fightingChair"
+  | "overview.liveBaitTank"
+  | "overview.outriggers"
+  | "overview.birdRadar"
+  | "overview.tubes"
+  | "overview.cabin"
+  | "overview.toilet"
+  | "overview.notProvided"
   | "overview.expeditionRoute"
   | "overview.addStop"
   | "overview.deleteTrip"
@@ -120,6 +139,22 @@ type TranslationKey =
   | "form.techniquesPlaceholder"
   | "form.tags"
   | "form.tagsPlaceholder"
+  | "form.guideBoatInfo"
+  | "form.guideBoatDescription"
+  | "form.guideName"
+  | "form.guideContact"
+  | "form.boatName"
+  | "form.boatLength"
+  | "form.boatType"
+  | "form.maxAnglers"
+  | "form.engineSetup"
+  | "form.fightingChair"
+  | "form.liveBaitTank"
+  | "form.outriggers"
+  | "form.birdRadar"
+  | "form.tubes"
+  | "form.hasCabin"
+  | "form.hasToilet"
   | "form.gallery"
   | "form.galleryDescription"
   | "form.upload"
@@ -210,6 +245,25 @@ const translations: Record<Language, TranslationDictionary> = {
     "overview.targetSpecies": "Target Species",
     "overview.techniques": "Techniques",
     "overview.tags": "Tags",
+    "overview.guideBoatInfo": "Guide & Boat Information",
+    "overview.guide": "Guide",
+    "overview.guideName": "Guide Name",
+    "overview.contact": "Contact",
+    "overview.boatInfo": "Boat Information",
+    "overview.boatName": "Boat Name",
+    "overview.length": "Length",
+    "overview.boatType": "Type of Boat",
+    "overview.maxAnglers": "Max Anglers",
+    "overview.engineSetup": "Engine Setup",
+    "overview.features": "Features",
+    "overview.fightingChair": "Fighting Chair",
+    "overview.liveBaitTank": "Live Bait Tank",
+    "overview.outriggers": "Outriggers",
+    "overview.birdRadar": "Bird Radar",
+    "overview.tubes": "Tubes",
+    "overview.cabin": "Cabin",
+    "overview.toilet": "Toilet",
+    "overview.notProvided": "Not provided",
     "overview.expeditionRoute": "Expedition Route",
     "overview.addStop": "Add Stop",
     "overview.deleteTrip": "Delete Trip",
@@ -286,6 +340,22 @@ const translations: Record<Language, TranslationDictionary> = {
     "form.techniquesPlaceholder": "Popping, fly, jigging",
     "form.tags": "Tags",
     "form.tagsPlaceholder": "Remote, bucket list, mothership",
+    "form.guideBoatInfo": "Guide & Boat Information",
+    "form.guideBoatDescription": "Add charter essentials here. Leave it folded when the stop does not need guide or boat notes.",
+    "form.guideName": "Guide Name",
+    "form.guideContact": "Guide Contact",
+    "form.boatName": "Boat Name",
+    "form.boatLength": "Length",
+    "form.boatType": "Type of Boat",
+    "form.maxAnglers": "Max Number of Anglers",
+    "form.engineSetup": "Engine Setup",
+    "form.fightingChair": "Fighting chair",
+    "form.liveBaitTank": "Live bait tank",
+    "form.outriggers": "Outriggers",
+    "form.birdRadar": "Bird radar",
+    "form.tubes": "Tubes",
+    "form.hasCabin": "Cabin",
+    "form.hasToilet": "Toilet",
     "form.gallery": "Gallery",
     "form.galleryDescription": "Mix uploaded images with remote URLs. Everything persists locally for the MVP.",
     "form.upload": "Upload",
@@ -372,6 +442,25 @@ const translations: Record<Language, TranslationDictionary> = {
     "overview.targetSpecies": "目标鱼种",
     "overview.techniques": "钓法",
     "overview.tags": "标签",
+    "overview.guideBoatInfo": "向导与船只信息",
+    "overview.guide": "向导",
+    "overview.guideName": "向导姓名",
+    "overview.contact": "联系方式",
+    "overview.boatInfo": "船只信息",
+    "overview.boatName": "船名",
+    "overview.length": "长度",
+    "overview.boatType": "船型",
+    "overview.maxAnglers": "最多钓手数",
+    "overview.engineSetup": "引擎配置",
+    "overview.features": "配置",
+    "overview.fightingChair": "搏鱼椅",
+    "overview.liveBaitTank": "活饵舱",
+    "overview.outriggers": "侧伸杆",
+    "overview.birdRadar": "鸟雷达",
+    "overview.tubes": "拖钓管",
+    "overview.cabin": "舱室",
+    "overview.toilet": "厕所",
+    "overview.notProvided": "未填写",
     "overview.expeditionRoute": "行程路线",
     "overview.addStop": "新增站点",
     "overview.deleteTrip": "删除行程",
@@ -448,6 +537,22 @@ const translations: Record<Language, TranslationDictionary> = {
     "form.techniquesPlaceholder": "波扒、飞蝇、铁板",
     "form.tags": "标签",
     "form.tagsPlaceholder": "偏远、梦想清单、母船",
+    "form.guideBoatInfo": "向导与船只信息",
+    "form.guideBoatDescription": "把 charter 的核心信息收在这里；如果这站不需要，就保持折叠即可。",
+    "form.guideName": "向导姓名",
+    "form.guideContact": "向导联系方式",
+    "form.boatName": "船名",
+    "form.boatLength": "长度",
+    "form.boatType": "船型",
+    "form.maxAnglers": "最多钓手数",
+    "form.engineSetup": "引擎配置",
+    "form.fightingChair": "搏鱼椅",
+    "form.liveBaitTank": "活饵舱",
+    "form.outriggers": "侧伸杆",
+    "form.birdRadar": "鸟雷达",
+    "form.tubes": "拖钓管",
+    "form.hasCabin": "舱室",
+    "form.hasToilet": "厕所",
     "form.gallery": "图片库",
     "form.galleryDescription": "支持上传本地图片，也支持填写远程图片链接；当前版本会保存在本地。",
     "form.upload": "上传",
