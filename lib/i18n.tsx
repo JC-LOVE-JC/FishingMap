@@ -17,6 +17,9 @@ type TranslationKey =
   | "toolbar.language"
   | "toolbar.chinese"
   | "toolbar.english"
+  | "toolbar.search"
+  | "toolbar.showSearch"
+  | "toolbar.hideSearch"
   | "timeline.tripTimeline"
   | "timeline.heading"
   | "timeline.description"
@@ -180,6 +183,9 @@ const translations: Record<Language, TranslationDictionary> = {
     "toolbar.language": "Language",
     "toolbar.chinese": "中文",
     "toolbar.english": "EN",
+    "toolbar.search": "Search",
+    "toolbar.showSearch": "Show search and filters",
+    "toolbar.hideSearch": "Hide search and filters",
     "timeline.tripTimeline": "Trip Timeline",
     "timeline.heading": "Past and upcoming water time",
     "timeline.description": "Every expedition is sorted by date so you can scan what happened and what is already booked next.",
@@ -339,6 +345,9 @@ const translations: Record<Language, TranslationDictionary> = {
     "toolbar.language": "语言",
     "toolbar.chinese": "中文",
     "toolbar.english": "EN",
+    "toolbar.search": "搜索",
+    "toolbar.showSearch": "展开搜索与筛选",
+    "toolbar.hideSearch": "收起搜索与筛选",
     "timeline.tripTimeline": "行程时间线",
     "timeline.heading": "行程时间线",
     "timeline.description": "所有行程都会按时间顺序排列，方便你快速浏览过往记录与后续安排。",

@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarRange, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Trash2 } from "lucide-react";
+import { CalendarRange, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 
 import { formatStopCount, formatStopOrdinal, useLanguage } from "@/lib/i18n";
 import type { TimelineExpedition } from "@/lib/types";
@@ -32,17 +32,14 @@ export function TimelineSidebar({
   return (
     <div
       className={cn(
-        "safe-x safe-bottom pointer-events-none absolute inset-x-3 bottom-3 z-20 flex flex-col-reverse transition-transform duration-300 xl:inset-y-[8.75rem] xl:left-6 xl:right-auto xl:bottom-6 xl:flex-row",
+        "pointer-events-none absolute bottom-24 left-3 top-[6.1rem] z-20 flex transition-transform duration-300 sm:bottom-28 lg:bottom-6 xl:inset-y-[8.75rem] xl:left-6 xl:right-auto xl:bottom-6",
         collapsed
-          ? "translate-y-[calc(100%-3.5rem)] xl:translate-y-0 xl:-translate-x-[calc(100%-3.25rem)]"
+          ? "-translate-x-[calc(100%-3.25rem)]"
           : "translate-x-0 translate-y-0"
       )}
     >
-      <div className="w-full xl:w-[24rem]">
-      <div className="pointer-events-auto flex max-h-[56vh] flex-col overflow-hidden rounded-[30px] border border-emerald-950/80 bg-[#051007]/98 shadow-[0_28px_80px_rgba(0,0,0,0.52)] backdrop-blur-2xl xl:h-full xl:max-h-none xl:rounded-[32px]">
-        <div className="px-5 pt-3 xl:hidden">
-          <div className="sheet-handle" />
-        </div>
+      <div className="w-[18rem] sm:w-[20rem] xl:w-[24rem]">
+      <div className="pointer-events-auto flex h-full max-h-none flex-col overflow-hidden rounded-[30px] border border-emerald-950/80 bg-[#051007]/98 shadow-[0_28px_80px_rgba(0,0,0,0.52)] backdrop-blur-2xl xl:rounded-[32px]">
         <div className="border-b border-emerald-950/70 bg-[linear-gradient(180deg,rgba(6,20,10,1),rgba(3,11,5,0.98))] px-5 py-5">
           <div className="flex items-center gap-3">
             <div className="flex size-11 items-center justify-center rounded-2xl border border-emerald-900/70 bg-[#102014] text-emerald-100 shadow-[0_0_24px_rgba(34,197,94,0.12)]">
@@ -208,15 +205,14 @@ export function TimelineSidebar({
       </div>
       </div>
 
-      <div className="pointer-events-auto mb-2 flex justify-center xl:mb-0 xl:items-start xl:pt-4">
+      <div className="pointer-events-auto flex items-start pt-4">
         <button
-          className="flex h-12 w-full max-w-[11rem] items-center justify-center gap-2 rounded-full border border-white/8 bg-[#03101a]/98 px-4 text-white/72 shadow-[0_24px_60px_rgba(0,0,0,0.42)] backdrop-blur-2xl transition hover:text-white xl:min-h-24 xl:w-12 xl:max-w-none xl:flex-col xl:rounded-r-[22px] xl:rounded-l-none xl:border-l-0 xl:px-2"
+          className="flex min-h-24 w-12 flex-col items-center justify-center gap-2 rounded-r-[22px] border border-l-0 border-white/8 bg-[#03101a]/98 px-2 text-white/72 shadow-[0_24px_60px_rgba(0,0,0,0.42)] backdrop-blur-2xl transition hover:text-white"
           onClick={onToggleCollapsed}
           type="button"
         >
-          {collapsed ? <ChevronUp className="size-5 xl:hidden" /> : <ChevronDown className="size-5 xl:hidden" />}
-          {collapsed ? <ChevronRight className="hidden size-5 xl:block" /> : <ChevronLeft className="hidden size-5 xl:block" />}
-          <span className="text-[0.62rem] uppercase tracking-[0.24em] text-white/48 xl:[writing-mode:vertical-rl]">
+          {collapsed ? <ChevronRight className="size-5" /> : <ChevronLeft className="size-5" />}
+          <span className="text-[0.62rem] uppercase tracking-[0.24em] text-white/48 [writing-mode:vertical-rl]">
             {t("timeline.tripTimeline")}
           </span>
           <span className="sr-only">{collapsed ? t("timeline.show") : t("timeline.hide")}</span>

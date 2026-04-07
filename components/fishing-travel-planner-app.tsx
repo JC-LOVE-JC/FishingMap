@@ -41,6 +41,7 @@ export function FishingTravelPlannerApp() {
   } | null>(null);
   const [timelineCollapsed, setTimelineCollapsed] = useState(false);
   const [detailsCollapsed, setDetailsCollapsed] = useState(false);
+  const [searchCollapsed, setSearchCollapsed] = useState(false);
   const [mapPickMode, setMapPickMode] = useState(false);
   const [isResolvingLocation, setIsResolvingLocation] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -68,6 +69,7 @@ export function FishingTravelPlannerApp() {
     if (window.innerWidth < 1024) {
       setTimelineCollapsed(true);
       setDetailsCollapsed(true);
+      setSearchCollapsed(true);
     }
 
     setIsLoaded(true);
@@ -183,6 +185,7 @@ export function FishingTravelPlannerApp() {
       setDetailsCollapsed(false);
       if (isMobileViewport()) {
         setTimelineCollapsed(true);
+        setSearchCollapsed(true);
       }
       setMapPickMode(false);
       setIsResolvingLocation(false);
@@ -198,6 +201,7 @@ export function FishingTravelPlannerApp() {
       setDetailsCollapsed(false);
       if (isMobileViewport()) {
         setTimelineCollapsed(true);
+        setSearchCollapsed(true);
       }
       setMapPickMode(false);
       setIsResolvingLocation(false);
@@ -223,6 +227,7 @@ export function FishingTravelPlannerApp() {
       setDetailsCollapsed(false);
       if (isMobileViewport()) {
         setTimelineCollapsed(true);
+        setSearchCollapsed(true);
       }
       setTransportDraft(null);
       setFormMode("add");
@@ -303,6 +308,7 @@ export function FishingTravelPlannerApp() {
       setDetailsCollapsed(false);
       if (isMobileViewport()) {
         setTimelineCollapsed(true);
+        setSearchCollapsed(true);
       }
       setMapPickMode(false);
       setIsResolvingLocation(false);
@@ -324,6 +330,7 @@ export function FishingTravelPlannerApp() {
       setDetailsCollapsed(false);
       if (isMobileViewport()) {
         setTimelineCollapsed(true);
+        setSearchCollapsed(true);
       }
       setMapPickMode(false);
       setIsResolvingLocation(false);
@@ -480,6 +487,7 @@ export function FishingTravelPlannerApp() {
 
     if (!collapsed && isMobileViewport()) {
       setDetailsCollapsed(true);
+      setSearchCollapsed(true);
     }
   }
 
@@ -488,6 +496,16 @@ export function FishingTravelPlannerApp() {
 
     if (!collapsed && isMobileViewport()) {
       setTimelineCollapsed(true);
+      setSearchCollapsed(true);
+    }
+  }
+
+  function handleSetSearchCollapsed(collapsed: boolean) {
+    setSearchCollapsed(collapsed);
+
+    if (!collapsed && isMobileViewport()) {
+      setTimelineCollapsed(true);
+      setDetailsCollapsed(true);
     }
   }
 
@@ -512,6 +530,7 @@ export function FishingTravelPlannerApp() {
         onEditTransport={handleEditTransport}
         onMapPlace={handleMapPlacement}
         onSelectDestination={handleSelectDestination}
+        searchPanelCollapsed={searchCollapsed}
         selectedId={selectedId}
       />
 
@@ -526,8 +545,10 @@ export function FishingTravelPlannerApp() {
         onAddDestination={handleStartAdd}
         onLanguageChange={setLanguage}
         onSearchChange={setSearchQuery}
+        onSearchPanelCollapsedChange={handleSetSearchCollapsed}
         onToggleFilter={handleToggleFilter}
         searchQuery={searchQuery}
+        searchPanelCollapsed={searchCollapsed}
         statusCounts={statusCounts}
         language={language}
       />

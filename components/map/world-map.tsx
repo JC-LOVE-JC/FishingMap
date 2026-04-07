@@ -21,6 +21,7 @@ type WorldMapProps = {
   onMapPlace: (coordinates: { lat: number; lng: number }) => void;
   onSelectDestination: (id: string) => void;
   rightPanelCollapsed: boolean;
+  searchPanelCollapsed: boolean;
   selectedExpedition: TimelineExpedition | null;
   selectedId: string | null;
 };
@@ -41,6 +42,7 @@ export function WorldMap({
   onMapPlace,
   onSelectDestination,
   rightPanelCollapsed,
+  searchPanelCollapsed,
   selectedExpedition,
   selectedId
 }: WorldMapProps) {
@@ -86,7 +88,7 @@ export function WorldMap({
         {
           duration: 1800,
           essential: true,
-          padding: getMapPadding(leftPanelCollapsed, rightPanelCollapsed),
+          padding: getMapPadding(leftPanelCollapsed, rightPanelCollapsed, searchPanelCollapsed),
           maxZoom: 9.8
         }
       );
@@ -97,10 +99,10 @@ export function WorldMap({
       center: [focusTarget.lng, focusTarget.lat],
       duration: 1800,
       essential: true,
-      padding: getMapPadding(leftPanelCollapsed, rightPanelCollapsed),
+      padding: getMapPadding(leftPanelCollapsed, rightPanelCollapsed, searchPanelCollapsed),
       zoom: Math.max(mapRef.current.getZoom(), 10.2)
     });
-  }, [focusTarget, leftPanelCollapsed, rightPanelCollapsed, selectedExpedition]);
+  }, [focusTarget, leftPanelCollapsed, rightPanelCollapsed, searchPanelCollapsed, selectedExpedition]);
 
   const routeSegments = useMemo(
     () =>
@@ -318,7 +320,8 @@ export function WorldMap({
 
       <div
         className={cn(
-          "pointer-events-none absolute right-3 top-[6.75rem] z-20 flex flex-col gap-2 sm:right-4 sm:top-[7.5rem] md:bottom-6 md:left-6 md:right-auto md:top-auto xl:bottom-8",
+          "pointer-events-none absolute right-3 z-20 flex flex-col gap-2 sm:right-4 lg:bottom-6 lg:left-6 lg:right-auto xl:bottom-8",
+          rightPanelCollapsed ? "bottom-24 sm:bottom-28" : "bottom-[23rem] sm:bottom-[25rem]",
           leftPanelCollapsed ? "xl:left-6" : "xl:left-[27.5rem]"
         )}
       >
@@ -369,7 +372,7 @@ export function WorldMap({
   );
 }
 
-function getMapPadding(leftPanelCollapsed: boolean, rightPanelCollapsed: boolean) {
+function getMapPadding(leftPanelCollapsed: boolean, rightPanelCollapsed: boolean, searchPanelCollapsed: boolean) {
   if (typeof window === "undefined") {
     return {
       top: 156,
@@ -380,14 +383,14 @@ function getMapPadding(leftPanelCollapsed: boolean, rightPanelCollapsed: boolean
   }
 
   if (window.innerWidth < 1024) {
-    const sheetOpen = !leftPanelCollapsed || !rightPanelCollapsed;
+    const bottomSheetOpen = !rightPanelCollapsed;
     const safeBottom = 24;
 
     return {
       top: 144,
-      right: 18,
-      bottom: (sheetOpen ? 360 : 110) + safeBottom,
-      left: 18
+      right: (searchPanelCollapsed ? 18 : 250),
+      bottom: (bottomSheetOpen ? 360 : 110) + safeBottom,
+      left: leftPanelCollapsed ? 18 : 244
     };
   }
 
