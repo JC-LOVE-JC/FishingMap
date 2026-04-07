@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+
 import { AnimatePresence, motion } from "framer-motion";
 import {
   CalendarDays,
@@ -116,6 +118,12 @@ export function DestinationPanel({
   transportDraft
 }: DestinationPanelProps) {
   const { language, locale, t } = useLanguage();
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const dragStartYRef = useRef(0);
+  const dragStartedCollapsedRef = useRef(false);
+  const draggingRef = useRef(false);
+  const suppressClickRef = useRef(false);
   const activeTheme =
     WATER_TYPE_META[
       draftDestination?.waterType || transportTarget?.waterType || selectedDestination?.waterType || "saltwater"
@@ -130,6 +138,98 @@ export function DestinationPanel({
     mode === "transport"
       ? "h-[50vh] min-h-[20rem] max-h-[32rem]"
       : "max-h-[68vh] min-h-[14rem]";
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const syncViewport = () => {
+      setIsMobileViewport(window.innerWidth < 1024);
+    };
+
+    syncViewport();
+    window.addEventListener("resize", syncViewport);
+
+    return () => {
+      window.removeEventListener("resize", syncViewport);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!draggingRef.current) {
+      setDragOffset(0);
+    }
+  }, [detailsCollapsed]);
+
+  function handleMobileDragStart(event: ReactPointerEvent<HTMLButtonElement>) {
+    if (!isMobileViewport) {
+      return;
+    }
+
+    dragStartYRef.current = event.clientY;
+    dragStartedCollapsedRef.current = detailsCollapsed;
+    draggingRef.current = true;
+    suppressClickRef.current = false;
+    setDragOffset(0);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function handleMobileDragMove(event: ReactPointerEvent<HTMLButtonElement>) {
+    if (!isMobileViewport || !draggingRef.current) {
+      return;
+    }
+
+    const delta = event.clientY - dragStartYRef.current;
+
+    if (Math.abs(delta) > 6) {
+      suppressClickRef.current = true;
+    }
+
+    const clamped = dragStartedCollapsedRef.current
+      ? Math.max(-220, Math.min(40, delta))
+      : Math.max(-24, Math.min(220, delta));
+
+    setDragOffset(clamped);
+  }
+
+  function handleMobileDragEnd(event: ReactPointerEvent<HTMLButtonElement>) {
+    if (!isMobileViewport || !draggingRef.current) {
+      return;
+    }
+
+    draggingRef.current = false;
+    event.currentTarget.releasePointerCapture(event.pointerId);
+    const delta = event.clientY - dragStartYRef.current;
+
+    if (dragStartedCollapsedRef.current) {
+      if (delta < -70) {
+        setDetailsCollapsed(false);
+      }
+    } else if (delta > 80) {
+      setDetailsCollapsed(true);
+    }
+
+    setDragOffset(0);
+  }
+
+  function handleMobileToggleClick() {
+    if (!isMobileViewport) {
+      setDetailsCollapsed(!detailsCollapsed);
+      return;
+    }
+
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false;
+      return;
+    }
+
+    setDetailsCollapsed(!detailsCollapsed);
+  }
+
+  const mobileTransform = detailsCollapsed
+    ? `translateY(calc(100% - 3.5rem + ${dragOffset}px))`
+    : `translateY(${dragOffset}px)`;
 
   return (
     <>
@@ -148,14 +248,20 @@ export function DestinationPanel({
         className={cn(
           "safe-x safe-bottom pointer-events-none absolute inset-x-3 bottom-3 z-20 flex flex-col transition-transform duration-300 lg:bottom-6 lg:left-auto lg:right-6 lg:top-[8.75rem] lg:flex-row lg:items-start",
           detailsCollapsed
-            ? "translate-y-[calc(100%-3.5rem)] lg:translate-y-0 lg:translate-x-[calc(100%-3.25rem)]"
-            : "translate-x-0 translate-y-0"
+            ? "lg:translate-x-[calc(100%-3.25rem)]"
+            : "lg:translate-x-0"
         )}
+        style={isMobileViewport ? { transform: mobileTransform } : undefined}
       >
         <div className="pointer-events-auto order-2 mt-2 flex justify-center lg:order-1 lg:mt-0 lg:items-start lg:pt-0">
           <button
             className="flex h-12 w-full max-w-[11rem] items-center justify-center gap-2 rounded-full border border-white/8 bg-[#03101a]/98 px-4 text-white/72 shadow-[0_24px_60px_rgba(0,0,0,0.42)] backdrop-blur-2xl transition hover:text-white lg:min-h-24 lg:w-12 lg:max-w-none lg:flex-col lg:rounded-l-[22px] lg:rounded-r-none lg:border-r-0 lg:px-2"
-            onClick={() => setDetailsCollapsed(!detailsCollapsed)}
+            onClick={handleMobileToggleClick}
+            onPointerCancel={handleMobileDragEnd}
+            onPointerDown={handleMobileDragStart}
+            onPointerMove={handleMobileDragMove}
+            onPointerUp={handleMobileDragEnd}
+            style={isMobileViewport ? { touchAction: "none" } : undefined}
             type="button"
           >
             {detailsCollapsed ? <ChevronUp className="size-5 lg:hidden" /> : <ChevronDown className="size-5 lg:hidden" />}
@@ -181,9 +287,27 @@ export function DestinationPanel({
           mobilePanelHeightClass,
           activeTheme.panelClassName
         )}>
-          <div className="px-5 pt-3 lg:hidden">
+          <button
+            className="px-5 pt-3 text-left lg:hidden"
+            onClick={handleMobileToggleClick}
+            onPointerCancel={handleMobileDragEnd}
+            onPointerDown={handleMobileDragStart}
+            onPointerMove={handleMobileDragMove}
+            onPointerUp={handleMobileDragEnd}
+            style={{ touchAction: "none" }}
+            type="button"
+          >
             <div className="sheet-handle" />
-          </div>
+            <span className="sr-only">
+              {detailsCollapsed
+                ? language === "zh"
+                  ? "拖动或点击打开详情"
+                  : "Drag or tap to open details"
+                : language === "zh"
+                  ? "拖动或点击关闭详情"
+                  : "Drag or tap to close details"}
+            </span>
+          </button>
           <div className={cn("pointer-events-none absolute inset-0 opacity-55", activeTheme.haloClassName)} />
           <AnimatePresence mode="wait">
             {mode === "transport" && transportDraft && transportTarget ? (
