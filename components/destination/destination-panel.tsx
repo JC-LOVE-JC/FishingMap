@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+
 import { AnimatePresence, motion } from "framer-motion";
 import {
   CalendarDays,
@@ -48,6 +50,7 @@ type DestinationPanelProps = {
   formMode: "add" | "edit" | null;
   isResolvingLocation: boolean;
   mapPickMode: boolean;
+  mobileDetailsSheetMode: "half" | "full";
   mode: "overview" | "details" | "form" | "transport";
   onDeleteDestination: (destinationId: string) => void;
   onDeleteExpedition: (expeditionId: string) => void;
@@ -58,6 +61,7 @@ type DestinationPanelProps = {
   onEditSelected: () => void;
   onEditTransport: (destinationId: string) => void;
   onEnableMapPick: () => void;
+  onMobileDetailsSheetModeChange: (mode: "half" | "full") => void;
   onSaveDraft: () => void;
   onSaveTransport: () => void;
   onSelectDestination: (id: string) => void;
@@ -88,6 +92,7 @@ export function DestinationPanel({
   formMode,
   isResolvingLocation,
   mapPickMode,
+  mobileDetailsSheetMode,
   mode,
   onDeleteDestination,
   onDeleteExpedition,
@@ -98,6 +103,7 @@ export function DestinationPanel({
   onEditSelected,
   onEditTransport,
   onEnableMapPick,
+  onMobileDetailsSheetModeChange,
   onSaveDraft,
   onSaveTransport,
   onSelectDestination,
@@ -116,6 +122,11 @@ export function DestinationPanel({
   transportDraft
 }: DestinationPanelProps) {
   const { language, locale, t } = useLanguage();
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const dragStartYRef = useRef(0);
+  const dragModeRef = useRef<"half" | "full">(mobileDetailsSheetMode);
+  const draggingRef = useRef(false);
   const activeTheme =
     WATER_TYPE_META[
       draftDestination?.waterType || transportTarget?.waterType || selectedDestination?.waterType || "saltwater"
@@ -126,6 +137,96 @@ export function DestinationPanel({
           (destination) => (destination.stopOrder ?? 1) === (transportTarget.stopOrder ?? 1) - 1
         ) ?? null
       : null;
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const syncViewport = () => {
+      setIsMobileViewport(window.innerWidth < 1024);
+    };
+
+    syncViewport();
+    window.addEventListener("resize", syncViewport);
+
+    return () => {
+      window.removeEventListener("resize", syncViewport);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (detailsCollapsed) {
+      setDragOffset(0);
+    }
+  }, [detailsCollapsed]);
+
+  function handleMobileSheetPointerDown(event: ReactPointerEvent<HTMLButtonElement>) {
+    if (!isMobileViewport) {
+      return;
+    }
+
+    dragStartYRef.current = event.clientY;
+    dragModeRef.current = mobileDetailsSheetMode;
+    draggingRef.current = true;
+    setDragOffset(0);
+
+    const target = event.currentTarget;
+    target.setPointerCapture(event.pointerId);
+  }
+
+  function handleMobileSheetPointerMove(event: ReactPointerEvent<HTMLButtonElement>) {
+    if (!isMobileViewport || !draggingRef.current) {
+      return;
+    }
+
+    const delta = event.clientY - dragStartYRef.current;
+    const clamped =
+      dragModeRef.current === "full"
+        ? Math.max(-140, Math.min(240, delta))
+        : Math.max(-240, Math.min(200, delta));
+
+    setDragOffset(clamped);
+  }
+
+  function handleMobileSheetPointerEnd(event: ReactPointerEvent<HTMLButtonElement>) {
+    if (!isMobileViewport || !draggingRef.current) {
+      return;
+    }
+
+    draggingRef.current = false;
+    event.currentTarget.releasePointerCapture(event.pointerId);
+    const delta = event.clientY - dragStartYRef.current;
+
+    if (dragModeRef.current === "full") {
+      if (delta > 110) {
+        onMobileDetailsSheetModeChange("half");
+      }
+    } else if (delta < -80) {
+      onMobileDetailsSheetModeChange("full");
+    } else if (delta > 120) {
+      setDetailsCollapsed(true);
+    }
+
+    setDragOffset(0);
+  }
+
+  function handleMobileHandleClick() {
+    if (detailsCollapsed) {
+      setDetailsCollapsed(false);
+      onMobileDetailsSheetModeChange("half");
+      return;
+    }
+
+    onMobileDetailsSheetModeChange(mobileDetailsSheetMode === "half" ? "full" : "half");
+  }
+
+  const mobileSheetTransform = getMobileSheetTransform({
+    collapsed: detailsCollapsed,
+    dragOffset,
+    mode,
+    mobileDetailsSheetMode
+  });
 
   return (
     <>
@@ -142,13 +243,14 @@ export function DestinationPanel({
 
       <div
         className={cn(
-          "safe-x safe-bottom pointer-events-none absolute inset-x-3 bottom-3 z-20 flex flex-col transition-transform duration-300 lg:inset-y-[8.75rem] lg:left-auto lg:right-6 lg:bottom-6 lg:flex-row",
+          "safe-x safe-bottom pointer-events-none absolute inset-x-3 top-[5.9rem] bottom-3 z-20 flex flex-col transition-transform duration-300 lg:inset-y-[8.75rem] lg:left-auto lg:right-6 lg:bottom-6 lg:top-auto lg:flex-row",
           detailsCollapsed
-            ? "translate-y-[calc(100%-3.5rem)] lg:translate-y-0 lg:translate-x-[calc(100%-3.25rem)]"
-            : "translate-x-0 translate-y-0"
+            ? "lg:translate-y-0 lg:translate-x-[calc(100%-3.25rem)]"
+            : "lg:translate-x-0 lg:translate-y-0"
         )}
+        style={isMobileViewport ? { transform: mobileSheetTransform } : undefined}
       >
-        <div className="pointer-events-auto order-2 mt-2 flex justify-center lg:order-1 lg:mt-0 lg:items-start lg:pt-4">
+        <div className="pointer-events-auto hidden justify-center lg:order-1 lg:mt-0 lg:flex lg:items-start lg:pt-4">
           <button
             className="flex h-12 w-full max-w-[11rem] items-center justify-center gap-2 rounded-full border border-white/8 bg-[#03101a]/98 px-4 text-white/72 shadow-[0_24px_60px_rgba(0,0,0,0.42)] backdrop-blur-2xl transition hover:text-white lg:min-h-24 lg:w-12 lg:max-w-none lg:flex-col lg:rounded-l-[22px] lg:rounded-r-none lg:border-r-0 lg:px-2"
             onClick={() => setDetailsCollapsed(!detailsCollapsed)}
@@ -173,18 +275,58 @@ export function DestinationPanel({
 
         <div className="order-1 w-full lg:order-2 lg:w-[30rem]">
         <div className={cn(
-          "pointer-events-auto relative flex max-h-[68vh] min-h-[14rem] flex-col overflow-hidden rounded-[30px] border border-white/8 bg-[#030d17]/96 shadow-[0_30px_90px_rgba(0,0,0,0.48)] backdrop-blur-2xl lg:h-full lg:max-h-none lg:min-h-0",
+          "pointer-events-auto relative flex h-full min-h-0 flex-col overflow-hidden rounded-[30px] border border-white/8 bg-[#030d17]/96 shadow-[0_30px_90px_rgba(0,0,0,0.48)] backdrop-blur-2xl lg:h-full lg:max-h-none lg:min-h-0",
           activeTheme.panelClassName
         )}>
-          <div className="px-5 pt-3 lg:hidden">
+          <button
+            className="relative z-10 border-b border-white/8 px-5 pb-3 pt-3 text-left lg:hidden"
+            onClick={handleMobileHandleClick}
+            onPointerDown={handleMobileSheetPointerDown}
+            onPointerMove={handleMobileSheetPointerMove}
+            onPointerUp={handleMobileSheetPointerEnd}
+            onPointerCancel={handleMobileSheetPointerEnd}
+            style={{ touchAction: "none" }}
+            type="button"
+          >
             <div className="sheet-handle" />
-          </div>
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <span>
+                <span className="block text-[0.62rem] uppercase tracking-[0.24em] text-white/42">
+                  {language === "zh" ? "目的地详情" : "Destination Detail"}
+                </span>
+                <span className="mt-1 block text-sm font-medium text-white/88">
+                  {mode === "transport"
+                    ? language === "zh"
+                      ? "交通信息"
+                      : "Transport"
+                    : mode === "form"
+                      ? language === "zh"
+                        ? "编辑中"
+                        : "Editing"
+                      : mode === "details" && selectedDestination
+                        ? selectedDestination.title
+                        : language === "zh"
+                          ? "总览"
+                          : "Overview"}
+                </span>
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/6 px-3 py-1 text-[0.66rem] uppercase tracking-[0.2em] text-white/62">
+                {mobileDetailsSheetMode === "half"
+                  ? language === "zh"
+                    ? "半屏"
+                    : "Half"
+                  : language === "zh"
+                    ? "全屏"
+                    : "Full"}
+              </span>
+            </div>
+          </button>
           <div className={cn("pointer-events-none absolute inset-0 opacity-55", activeTheme.haloClassName)} />
           <AnimatePresence mode="wait">
             {mode === "transport" && transportDraft && transportTarget ? (
               <motion.div
                 animate={{ opacity: 1, x: 0 }}
-                className="relative h-full overflow-y-auto p-5 md:p-6"
+                className="relative flex-1 overflow-y-auto p-5 md:p-6"
                 exit={{ opacity: 0, x: 16 }}
                 initial={{ opacity: 0, x: 16 }}
                 key={`transport-${transportDraft.destinationId}`}
@@ -204,7 +346,7 @@ export function DestinationPanel({
             {mode === "form" && draftDestination && formMode ? (
               <motion.div
                 animate={{ opacity: 1, x: 0 }}
-                className="relative h-full overflow-y-auto p-5 md:p-6"
+                className="relative flex-1 overflow-y-auto p-5 md:p-6"
                 exit={{ opacity: 0, x: 16 }}
                 initial={{ opacity: 0, x: 16 }}
                 key={`form-${draftDestination.id}`}
@@ -229,7 +371,7 @@ export function DestinationPanel({
             {mode === "details" && selectedDestination ? (
               <motion.div
                 animate={{ opacity: 1, x: 0 }}
-                className="relative h-full overflow-y-auto p-5 md:p-6"
+                className="relative flex-1 overflow-y-auto p-5 md:p-6"
                 exit={{ opacity: 0, x: 16 }}
                 initial={{ opacity: 0, x: 16 }}
                 key={selectedDestination.id}
@@ -464,7 +606,7 @@ export function DestinationPanel({
             {mode === "overview" ? (
               <motion.div
                 animate={{ opacity: 1, x: 0 }}
-                className="relative h-full overflow-y-auto p-5 md:p-6"
+                className="relative flex-1 overflow-y-auto p-5 md:p-6"
                 exit={{ opacity: 0, x: 16 }}
                 initial={{ opacity: 0, x: 16 }}
                 key="overview"
@@ -524,4 +666,29 @@ export function DestinationPanel({
       </div>
     </>
   );
+}
+
+function getMobileSheetTransform({
+  collapsed,
+  dragOffset,
+  mode,
+  mobileDetailsSheetMode
+}: {
+  collapsed: boolean;
+  dragOffset: number;
+  mode: DestinationPanelProps["mode"];
+  mobileDetailsSheetMode: "half" | "full";
+}) {
+  const base =
+    collapsed
+      ? "calc(100% - 5rem)"
+      : mobileDetailsSheetMode === "full"
+        ? "0px"
+        : mode === "transport"
+          ? "calc(100% - min(38rem, 72vh))"
+          : mode === "form"
+            ? "calc(100% - min(40rem, 78vh))"
+            : "calc(100% - min(30rem, 56vh))";
+
+  return `translateY(calc(${base} + ${dragOffset}px))`;
 }

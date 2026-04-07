@@ -17,6 +17,7 @@ type WorldMapProps = {
   draftCoordinates: { lat: number; lng: number } | null;
   focusTarget: Pick<Destination, "lat" | "lng"> | null;
   leftPanelCollapsed: boolean;
+  mobileDetailSheetMode: "half" | "full";
   onEditTransport: (destinationId: string) => void;
   onMapPlace: (coordinates: { lat: number; lng: number }) => void;
   onSelectDestination: (id: string) => void;
@@ -72,6 +73,7 @@ export function WorldMap({
   draftCoordinates,
   focusTarget,
   leftPanelCollapsed,
+  mobileDetailSheetMode,
   onEditTransport,
   onMapPlace,
   onSelectDestination,
@@ -83,6 +85,7 @@ export function WorldMap({
   const mapRef = useRef<MapRef | null>(null);
   const previousFocus = useRef<string>("");
   const [hoveredTransportDestinationId, setHoveredTransportDestinationId] = useState<string | null>(null);
+  const [mapZoom, setMapZoom] = useState(INITIAL_VIEW_STATE.zoom);
   const { language, t } = useLanguage();
 
   useEffect(() => {
@@ -122,7 +125,7 @@ export function WorldMap({
         {
           duration: 1800,
           essential: true,
-          padding: getMapPadding(leftPanelCollapsed, rightPanelCollapsed, searchPanelCollapsed),
+          padding: getMapPadding(leftPanelCollapsed, rightPanelCollapsed, searchPanelCollapsed, mobileDetailSheetMode),
           maxZoom: 9.8
         }
       );
@@ -133,10 +136,10 @@ export function WorldMap({
       center: [focusTarget.lng, focusTarget.lat],
       duration: 1800,
       essential: true,
-      padding: getMapPadding(leftPanelCollapsed, rightPanelCollapsed, searchPanelCollapsed),
+      padding: getMapPadding(leftPanelCollapsed, rightPanelCollapsed, searchPanelCollapsed, mobileDetailSheetMode),
       zoom: Math.max(mapRef.current.getZoom(), 10.2)
     });
-  }, [focusTarget, leftPanelCollapsed, rightPanelCollapsed, searchPanelCollapsed, selectedExpedition]);
+  }, [focusTarget, leftPanelCollapsed, mobileDetailSheetMode, rightPanelCollapsed, searchPanelCollapsed, selectedExpedition]);
 
   const routeSegments = useMemo(
     () =>
@@ -184,6 +187,7 @@ export function WorldMap({
   );
   const hoveredTransport =
     transportMarkers.find((item) => item.destinationId === hoveredTransportDestinationId) ?? null;
+  const transportScale = getTransportScale(mapZoom);
 
   return (
     <div className="absolute inset-0">
@@ -201,8 +205,12 @@ export function WorldMap({
         renderWorldCopies={false}
         sky={MAP_SKY}
         style={{ height: "100%", width: "100%" }}
+        onMove={(event) => {
+          setMapZoom(event.viewState.zoom);
+        }}
         onLoad={() => {
           mapRef.current?.getMap().setProjection({ type: "globe" });
+          setMapZoom(mapRef.current?.getZoom() ?? INITIAL_VIEW_STATE.zoom);
         }}
         onClick={(event) => {
           if (!addMode) {
@@ -274,7 +282,7 @@ export function WorldMap({
             >
               <div
                 className={`pointer-events-none flex size-8 items-center justify-center rounded-full border shadow-[0_10px_20px_rgba(0,0,0,0.28)] ${routeMeta.arrowClassName}`}
-                style={{ transform: `rotate(${marker.arrowBearing}deg)` }}
+                style={{ transform: `rotate(${marker.arrowBearing}deg) scale(${Math.max(0.42, transportScale * 0.8)})` }}
               >
                 <Navigation className="size-4" />
               </div>
@@ -293,13 +301,14 @@ export function WorldMap({
               longitude={marker.lng}
             >
               <button
-                className={`group relative flex size-[3.8rem] items-center justify-center rounded-[1.55rem] border shadow-[0_16px_30px_rgba(0,0,0,0.34)] backdrop-blur-xl transition hover:scale-[1.03] ${routeMeta.buttonClassName}`}
+                className={`group relative flex size-[3.8rem] items-center justify-center rounded-[1.55rem] border shadow-[0_16px_30px_rgba(0,0,0,0.34)] backdrop-blur-xl transition hover:brightness-110 ${routeMeta.buttonClassName}`}
                 onClick={(event) => {
                   event.stopPropagation();
                   onEditTransport(marker.destinationId);
                 }}
                 onMouseEnter={() => setHoveredTransportDestinationId(marker.destinationId)}
                 onMouseLeave={() => setHoveredTransportDestinationId((current) => (current === marker.destinationId ? null : current))}
+                style={{ transform: `scale(${transportScale})` }}
                 type="button"
               >
                 <span className="pointer-events-none absolute inset-[2px] rounded-[1.4rem] border border-white/12 opacity-55" />
@@ -383,7 +392,11 @@ export function WorldMap({
       <div
         className={cn(
           "pointer-events-none absolute right-3 z-20 flex flex-col gap-2 sm:right-4 lg:bottom-6 lg:left-6 lg:right-auto xl:bottom-8",
-          rightPanelCollapsed ? "bottom-24 sm:bottom-28" : "bottom-[23rem] sm:bottom-[25rem]",
+          rightPanelCollapsed
+            ? "bottom-24 sm:bottom-28"
+            : mobileDetailSheetMode === "full"
+              ? "bottom-[33rem] sm:bottom-[36rem]"
+              : "bottom-[18rem] sm:bottom-[21rem]",
           leftPanelCollapsed ? "xl:left-6" : "xl:left-[27.5rem]"
         )}
       >
@@ -438,8 +451,9 @@ function TransportIcon({ mode }: { mode: TransportMode }) {
   if (mode === "flight") {
     return (
       <svg aria-hidden="true" className="size-9 drop-shadow-[0_4px_6px_rgba(0,0,0,0.22)]" viewBox="0 0 64 64">
-        <path d="M34 7L41 12L37 28L56 23L60 27L42 36L46 52L41 56L32 40L21 48L17 45L23 35L9 31L5 26L24 25L34 7Z" fill="#22c55e" stroke="#dcfce7" strokeWidth="2.4" strokeLinejoin="round" />
-        <path d="M34 10L38 13L34 27L51 24L41 33L44 48L32 38L22 45L26 34L14 30L29 28L34 10Z" fill="#166534" opacity="0.35" />
+        <path d="M33 6L39 10.5L36.5 25L52 20L58.5 24L43.5 33L47 48.5L42 53L31.5 39L20.5 47L16 43.5L22 33.5L9 29.5L5.5 24.5L23.5 22.5L33 6Z" fill="#22c55e" stroke="#DCFCE7" strokeWidth="2" strokeLinejoin="round" />
+        <path d="M33 9L36.8 12L34.2 24.8L48 21.2L40.5 29L43.2 43L32 35.5L23.2 42L26.2 31L14 27.8L26.8 26.2L33 9Z" fill="#166534" opacity="0.34" />
+        <path d="M28 22L38.5 27" stroke="#ECFDF5" strokeLinecap="round" strokeWidth="1.8" opacity="0.9" />
       </svg>
     );
   }
@@ -451,26 +465,40 @@ function TransportIcon({ mode }: { mode: TransportMode }) {
         <circle cx="45" cy="45" fill="#0f172a" r="6.5" />
         <circle cx="19" cy="45" fill="#e2e8f0" r="3" />
         <circle cx="45" cy="45" fill="#e2e8f0" r="3" />
-        <path d="M14 24H36L45 31H54C56.8 31 59 33.2 59 36V42H9V32C9 27.6 12.6 24 17 24H14Z" fill="#94a3b8" stroke="#f8fafc" strokeLinejoin="round" strokeWidth="2.4" />
-        <path d="M21 24L26 16H40L43 24" stroke="#f8fafc" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" />
-        <path d="M21 31H31M36 31H45" stroke="#334155" strokeLinecap="round" strokeWidth="2.6" />
-        <path d="M14 24H36L45 31H54C56.8 31 59 33.2 59 36V38H9V32C9 27.6 12.6 24 17 24H14Z" fill="#ffffff" opacity="0.12" />
+        <path d="M12 28L18 20H38L47 25L54 26.5C57.6 27.3 60 30.4 60 34V41H8V33C8 30.2 9.6 27.7 12 28Z" fill="#CBD5E1" stroke="#F8FAFC" strokeLinejoin="round" strokeWidth="2" />
+        <path d="M19 20H39L43 27H16L19 20Z" fill="#94A3B8" opacity="0.55" />
+        <path d="M16 27H45" stroke="#475569" strokeLinecap="round" strokeWidth="2.4" />
+        <path d="M24 18.8L29 15H42.5" stroke="#F8FAFC" strokeLinecap="round" strokeWidth="1.8" />
+        <path d="M12 31H59" stroke="#FFFFFF" strokeOpacity="0.2" strokeLinecap="round" strokeWidth="1.8" />
       </svg>
     );
   }
 
   return (
     <svg aria-hidden="true" className="size-9 drop-shadow-[0_4px_6px_rgba(0,0,0,0.22)]" viewBox="0 0 64 64">
-      <path d="M14 40H54L47 48H24C19 48 15.2 45.2 14 40Z" fill="#2563eb" stroke="#dbeafe" strokeLinejoin="round" strokeWidth="2.4" />
-      <path d="M28 19H38L43 32H24L28 19Z" fill="#eff6ff" stroke="#dbeafe" strokeLinejoin="round" strokeWidth="2.4" />
-      <path d="M32 14V32" stroke="#dbeafe" strokeLinecap="round" strokeWidth="2.4" />
-      <path d="M13 51C16 49.4 18.5 49.4 21.5 51C24.5 52.6 27 52.6 30 51C33 49.4 35.5 49.4 38.5 51C41.5 52.6 44 52.6 47 51C50 49.4 52.5 49.4 55.5 51" stroke="#93c5fd" strokeLinecap="round" strokeWidth="2.4" />
-      <path d="M16 40H52L46 46H25C21 46 17.9 43.8 16 40Z" fill="#ffffff" opacity="0.12" />
+      <path d="M13 39H55L49 48H26C20 48 15.4 44.5 13 39Z" fill="#2563EB" stroke="#DBEAFE" strokeLinejoin="round" strokeWidth="2" />
+      <path d="M25 21H39L46 32H22L25 21Z" fill="#EFF6FF" stroke="#DBEAFE" strokeLinejoin="round" strokeWidth="2" />
+      <path d="M31.5 15V32" stroke="#DBEAFE" strokeLinecap="round" strokeWidth="2" />
+      <path d="M24 31.5H46" stroke="#93C5FD" strokeLinecap="round" strokeWidth="1.8" opacity="0.8" />
+      <path d="M13 52C16 50.5 18.8 50.5 21.8 52C24.8 53.5 27.6 53.5 30.6 52C33.6 50.5 36.4 50.5 39.4 52C42.4 53.5 45.2 53.5 48.2 52C51.2 50.5 54 50.5 57 52" stroke="#93C5FD" strokeLinecap="round" strokeWidth="2.2" />
+      <path d="M16 39H52L47 45H26.5C22 45 18.2 42.8 16 39Z" fill="#FFFFFF" opacity="0.14" />
     </svg>
   );
 }
 
-function getMapPadding(leftPanelCollapsed: boolean, rightPanelCollapsed: boolean, searchPanelCollapsed: boolean) {
+function getTransportScale(zoom: number) {
+  const minScale = 0.34;
+  const maxScale = 1;
+  const normalized = (zoom - 1.4) / 7.2;
+  return Math.max(minScale, Math.min(maxScale, normalized * (maxScale - minScale) + minScale));
+}
+
+function getMapPadding(
+  leftPanelCollapsed: boolean,
+  rightPanelCollapsed: boolean,
+  searchPanelCollapsed: boolean,
+  mobileDetailSheetMode: "half" | "full"
+) {
   if (typeof window === "undefined") {
     return {
       top: 156,
@@ -487,7 +515,7 @@ function getMapPadding(leftPanelCollapsed: boolean, rightPanelCollapsed: boolean
     return {
       top: 144,
       right: (searchPanelCollapsed ? 18 : 250),
-      bottom: (bottomSheetOpen ? 360 : 110) + safeBottom,
+      bottom: (bottomSheetOpen ? (mobileDetailSheetMode === "full" ? 520 : 290) : 110) + safeBottom,
       left: leftPanelCollapsed ? 18 : 244
     };
   }

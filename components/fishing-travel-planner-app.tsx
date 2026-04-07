@@ -29,6 +29,7 @@ import type {
 } from "@/lib/types";
 
 const seeded = (seedDestinations as Destination[]).map(normalizeDestination);
+type MobileDetailsSheetMode = "half" | "full";
 
 export function FishingTravelPlannerApp() {
   const [destinations, setDestinations] = useState<Destination[]>(seeded);
@@ -42,6 +43,7 @@ export function FishingTravelPlannerApp() {
   } | null>(null);
   const [timelineCollapsed, setTimelineCollapsed] = useState(false);
   const [detailsCollapsed, setDetailsCollapsed] = useState(false);
+  const [mobileDetailsSheetMode, setMobileDetailsSheetMode] = useState<MobileDetailsSheetMode>("half");
   const [searchCollapsed, setSearchCollapsed] = useState(false);
   const [mapPickMode, setMapPickMode] = useState(false);
   const [isResolvingLocation, setIsResolvingLocation] = useState(false);
@@ -224,15 +226,21 @@ export function FishingTravelPlannerApp() {
     });
   }
 
+  function openDetailsSheet(preferredMode: MobileDetailsSheetMode = "half") {
+    setDetailsCollapsed(false);
+
+    if (isMobileViewport()) {
+      setMobileDetailsSheetMode(preferredMode);
+      setTimelineCollapsed(true);
+      setSearchCollapsed(true);
+    }
+  }
+
   function handleSelectDestination(id: string) {
     startTransition(() => {
       setSelectedId(id);
       setFormMode(null);
-      setDetailsCollapsed(false);
-      if (isMobileViewport()) {
-        setTimelineCollapsed(true);
-        setSearchCollapsed(true);
-      }
+      openDetailsSheet("half");
       setMapPickMode(false);
       setIsResolvingLocation(false);
       setTransportDraft(null);
@@ -244,11 +252,7 @@ export function FishingTravelPlannerApp() {
     startTransition(() => {
       setSelectedId(null);
       setFormMode("add");
-      setDetailsCollapsed(false);
-      if (isMobileViewport()) {
-        setTimelineCollapsed(true);
-        setSearchCollapsed(true);
-      }
+      openDetailsSheet("full");
       setMapPickMode(false);
       setIsResolvingLocation(false);
       setTransportDraft(null);
@@ -270,11 +274,7 @@ export function FishingTravelPlannerApp() {
 
     startTransition(() => {
       setSelectedId(null);
-      setDetailsCollapsed(false);
-      if (isMobileViewport()) {
-        setTimelineCollapsed(true);
-        setSearchCollapsed(true);
-      }
+      openDetailsSheet("full");
       setTransportDraft(null);
       setFormMode("add");
       setMapPickMode(false);
@@ -351,11 +351,7 @@ export function FishingTravelPlannerApp() {
         ...selectedDestination,
         photos: [...selectedDestination.photos]
       });
-      setDetailsCollapsed(false);
-      if (isMobileViewport()) {
-        setTimelineCollapsed(true);
-        setSearchCollapsed(true);
-      }
+      openDetailsSheet("full");
       setMapPickMode(false);
       setIsResolvingLocation(false);
       setTransportDraft(null);
@@ -373,11 +369,7 @@ export function FishingTravelPlannerApp() {
     startTransition(() => {
       setSelectedId(destinationId);
       setFormMode(null);
-      setDetailsCollapsed(false);
-      if (isMobileViewport()) {
-        setTimelineCollapsed(true);
-        setSearchCollapsed(true);
-      }
+      openDetailsSheet("half");
       setMapPickMode(false);
       setIsResolvingLocation(false);
       setDraftDestination(null);
@@ -543,6 +535,7 @@ export function FishingTravelPlannerApp() {
     if (!collapsed && isMobileViewport()) {
       setTimelineCollapsed(true);
       setSearchCollapsed(true);
+      setMobileDetailsSheetMode("half");
     }
   }
 
@@ -576,6 +569,7 @@ export function FishingTravelPlannerApp() {
         onEditTransport={handleEditTransport}
         onMapPlace={handleMapPlacement}
         onSelectDestination={handleSelectDestination}
+        mobileDetailSheetMode={mobileDetailsSheetMode}
         searchPanelCollapsed={searchCollapsed}
         selectedId={selectedId}
       />
@@ -608,6 +602,7 @@ export function FishingTravelPlannerApp() {
         formMode={formMode}
         isResolvingLocation={isResolvingLocation}
         mapPickMode={mapPickMode}
+        mobileDetailsSheetMode={mobileDetailsSheetMode}
         onDeleteDestination={handleDeleteDestination}
         onDeleteExpedition={handleDeleteExpedition}
         selectedExpeditionId={selectedExpeditionId}
@@ -627,6 +622,7 @@ export function FishingTravelPlannerApp() {
         onSaveTransport={handleSaveTransport}
         onSelectDestination={handleSelectDestination}
         onShowOverview={() => setSelectedId(null)}
+        onMobileDetailsSheetModeChange={setMobileDetailsSheetMode}
         searchQuery={searchQuery}
         selectedExpedition={selectedExpedition}
         selectedDestination={selectedDestination}
