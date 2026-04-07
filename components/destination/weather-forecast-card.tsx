@@ -10,6 +10,7 @@ import type { Destination } from "@/lib/types";
 import {
   buildWindyUrl,
   formatForecastDay,
+  formatForecastHour,
   formatWindDirection,
   getWeatherCodeLabel,
   type WeatherForecastResponse
@@ -192,6 +193,32 @@ export function WeatherForecastCard({ destination }: WeatherForecastCardProps) {
                       </div>
                     ) : null}
                   </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="eyebrow">{t("weather.nextHours")}</p>
+            <div className="mt-3 grid gap-2 md:grid-cols-4">
+              {forecast.hourly.slice(0, 8).map((hour) => (
+                <div className="rounded-[20px] border border-white/6 bg-[#0a150c] px-3 py-3" key={hour.time}>
+                  <p className="text-[0.68rem] uppercase tracking-[0.2em] text-white/40">
+                    {formatForecastHour(hour.time, locale)}
+                  </p>
+                  <p className="mt-2 text-lg font-medium text-white">{formatTemperature(hour.temperature)}</p>
+                  <p className="mt-1 text-xs text-white/54">
+                    {translateWeatherCondition(
+                      hour.conditionLabel || getWeatherCodeLabel(hour.weatherCode),
+                      language
+                    )}
+                  </p>
+                  <p className="mt-3 text-xs text-white/62">
+                    {t("weather.wind")} {formatWind(hour.windSpeed)}
+                  </p>
+                  <p className="mt-1 text-xs text-white/62">
+                    {t("weather.rain")} {formatPercent(hour.precipitationProbability)}
+                  </p>
                 </div>
               ))}
             </div>

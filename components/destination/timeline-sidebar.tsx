@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
-
 import { CalendarRange, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 
 import { formatStopCount, formatStopOrdinal, useLanguage } from "@/lib/i18n";
@@ -30,27 +28,6 @@ export function TimelineSidebar({
   selectedId
 }: TimelineSidebarProps) {
   const { language, locale, t } = useLanguage();
-  const expeditionRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const timelineAnchorId = useMemo(() => getTimelineAnchorId(sections), [sections]);
-
-  useEffect(() => {
-    if (collapsed || !timelineAnchorId) {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      const target = expeditionRefs.current[timelineAnchorId];
-
-      target?.scrollIntoView({
-        behavior: "smooth",
-        block: "center"
-      });
-    }, 220);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [collapsed, timelineAnchorId]);
 
   return (
     <div
@@ -121,9 +98,6 @@ export function TimelineSidebar({
                             : `${accent.card} hover:bg-[#102014]`
                         }`}
                         key={expedition.id}
-                        ref={(node) => {
-                          expeditionRefs.current[expedition.id] = node;
-                        }}
                         onClick={() => {
                           if (leadDestinationId) {
                             onSelectDestination(leadDestinationId);
@@ -268,63 +242,4 @@ function getTimelineDate(value?: string, locale = "en-US") {
     month: date.toLocaleDateString(locale, { month: "short" }),
     day: date.toLocaleDateString(locale, { day: "2-digit" })
   };
-}
-
-function getTimelineAnchorId(sections: Array<{ id: string; items: TimelineExpedition[] }>) {
-  const expeditions = sections.flatMap((section) => section.items);
-
-  if (!expeditions.length) {
-    return null;
-  }
-
-  const now = new Date();
-  const active = expeditions.find((expedition) => isExpeditionActive(expedition, now));
-
-  if (active) {
-    return active.id;
-  }
-
-  const upcoming = expeditions
-    .filter((expedition) => {
-      const start = getExpeditionStart(expedition);
-      return start ? start.getTime() >= now.getTime() : false;
-    })
-    .sort((a, b) => {
-      const aStart = getExpeditionStart(a)?.getTime() ?? Number.POSITIVE_INFINITY;
-      const bStart = getExpeditionStart(b)?.getTime() ?? Number.POSITIVE_INFINITY;
-      return aStart - bStart;
-    })[0];
-
-  if (upcoming) {
-    return upcoming.id;
-  }
-
-  return expeditions[expeditions.length - 1]?.id ?? null;
-}
-
-function isExpeditionActive(expedition: TimelineExpedition, now: Date) {
-  const start = getExpeditionStart(expedition);
-  const end = getExpeditionEnd(expedition);
-
-  if (!start || !end) {
-    return false;
-  }
-
-  return start.getTime() <= now.getTime() && end.getTime() >= now.getTime();
-}
-
-function getExpeditionStart(expedition: TimelineExpedition) {
-  if (!expedition.startDate) {
-    return null;
-  }
-
-  return new Date(`${expedition.startDate}T00:00:00`);
-}
-
-function getExpeditionEnd(expedition: TimelineExpedition) {
-  if (!expedition.endDate && !expedition.startDate) {
-    return null;
-  }
-
-  return new Date(`${expedition.endDate || expedition.startDate}T23:59:59`);
 }
