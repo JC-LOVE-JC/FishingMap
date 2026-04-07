@@ -10,7 +10,7 @@ import type {
 
 export const STATUS_ORDER: DestinationStatus[] = ["planned", "visited"];
 
-export const STORAGE_KEY = "fishing-travel-planner.destinations.v5";
+export const STORAGE_KEY = "fishing-travel-planner.destinations.v6";
 
 export const STATUS_META: Record<
   DestinationStatus,
@@ -49,17 +49,24 @@ export const WATER_TYPE_META: Record<
 > = {
   saltwater: {
     label: "Saltwater",
-    badgeClassName: "bg-emerald-950/80 text-emerald-100 border-emerald-900/60",
+    badgeClassName: "bg-sky-950/85 text-sky-100 border-sky-800/60",
     panelClassName:
-      "border-emerald-950/70 bg-[linear-gradient(145deg,rgba(5,24,17,0.99),rgba(2,10,7,0.98))]",
-    haloClassName: "bg-[radial-gradient(circle_at_top,rgba(20,83,45,0.18),transparent_52%)]"
+      "border-sky-950/70 bg-[linear-gradient(145deg,rgba(5,16,34,0.99),rgba(2,8,18,0.98))]",
+    haloClassName: "bg-[radial-gradient(circle_at_top,rgba(37,99,235,0.2),transparent_52%)]"
   },
   freshwater: {
     label: "Freshwater",
-    badgeClassName: "bg-lime-950/80 text-lime-100 border-lime-900/55",
+    badgeClassName: "bg-emerald-950/85 text-emerald-100 border-emerald-900/60",
     panelClassName:
-      "border-lime-950/70 bg-[linear-gradient(145deg,rgba(12,29,16,0.99),rgba(4,12,8,0.98))]",
-    haloClassName: "bg-[radial-gradient(circle_at_top,rgba(77,124,15,0.16),transparent_52%)]"
+      "border-emerald-950/70 bg-[linear-gradient(145deg,rgba(7,24,15,0.99),rgba(3,12,7,0.98))]",
+    haloClassName: "bg-[radial-gradient(circle_at_top,rgba(22,101,52,0.2),transparent_52%)]"
+  },
+  urban: {
+    label: "Urban",
+    badgeClassName: "bg-slate-800/88 text-slate-100 border-slate-500/45",
+    panelClassName:
+      "border-slate-700/70 bg-[linear-gradient(145deg,rgba(28,33,39,0.99),rgba(9,12,16,0.98))]",
+    haloClassName: "bg-[radial-gradient(circle_at_top,rgba(203,213,225,0.14),transparent_52%)]"
   }
 };
 
@@ -219,6 +226,17 @@ export function inferWaterType(destination: Partial<Destination>): WaterType {
     return "freshwater";
   }
 
+  if (
+    haystack.includes("city") ||
+    haystack.includes("urban") ||
+    haystack.includes("harbour") ||
+    haystack.includes("harbor") ||
+    haystack.includes("canal") ||
+    haystack.includes("metropolitan")
+  ) {
+    return "urban";
+  }
+
   return "saltwater";
 }
 
@@ -276,7 +294,7 @@ export function normalizeDestination(destination: Destination): Destination {
     transportFromPrevious: normalizeTransportSegment(destination.transportFromPrevious),
     city: destination.city ?? "",
     region: destination.region ?? "",
-    waterType: destination.waterType ?? inferWaterType(destination),
+    waterType: coerceWaterType((destination as Destination & { waterType?: string }).waterType) ?? inferWaterType(destination),
     season: destination.season ?? "",
     startDate,
     endDate,
@@ -304,6 +322,14 @@ function coerceStatus(status?: string): DestinationStatus {
   }
 
   return "planned";
+}
+
+function coerceWaterType(waterType?: string): WaterType | null {
+  if (waterType === "saltwater" || waterType === "freshwater" || waterType === "urban") {
+    return waterType;
+  }
+
+  return null;
 }
 
 export function parseStoredDestinations(value: string | null) {

@@ -4,6 +4,8 @@ import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 
 import { ImagePlus, LoaderCircle, MapPinned, Plus, Search, Trash2, UploadCloud } from "lucide-react";
 
+import { FishSpeciesSelector } from "@/components/destination/fish-species-selector";
+import { TechniqueSelector } from "@/components/destination/technique-selector";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,8 +23,6 @@ import {
   STATUS_ORDER,
   WATER_TYPE_META,
   cn,
-  joinList,
-  splitList,
   toPhotoFromDataUrl
 } from "@/lib/utils";
 
@@ -120,10 +120,6 @@ export function DestinationForm({
       ...value,
       [key]: nextValue
     });
-  }
-
-  function updateArrayField(key: "species" | "techniques" | "tags", nextValue: string) {
-    updateField(key, splitList(nextValue));
   }
 
   function updatePhoto(photoId: string, key: keyof PhotoItem, nextValue: string) {
@@ -575,11 +571,11 @@ export function DestinationForm({
           <label className="eyebrow" htmlFor="species">
             {t("form.species")}
           </label>
-          <Input
-            id="species"
-            onChange={(event) => updateArrayField("species", event.target.value)}
-            placeholder={t("form.speciesPlaceholder")}
-            value={joinList(value.species)}
+          <FishSpeciesSelector
+            inputId="species"
+            onChange={(species) => updateField("species", species)}
+            value={value.species}
+            waterType={value.waterType}
           />
         </div>
 
@@ -587,11 +583,10 @@ export function DestinationForm({
           <label className="eyebrow" htmlFor="techniques">
             {t("form.techniques")}
           </label>
-          <Input
-            id="techniques"
-            onChange={(event) => updateArrayField("techniques", event.target.value)}
-            placeholder={t("form.techniquesPlaceholder")}
-            value={joinList(value.techniques)}
+          <TechniqueSelector
+            inputId="techniques"
+            onChange={(techniques) => updateField("techniques", techniques)}
+            value={value.techniques}
           />
         </div>
 
@@ -601,9 +596,12 @@ export function DestinationForm({
           </label>
           <Input
             id="tags"
-            onChange={(event) => updateArrayField("tags", event.target.value)}
+            onChange={(event) => updateField("tags", event.target.value
+              .split(",")
+              .map((item) => item.trim())
+              .filter(Boolean))}
             placeholder={t("form.tagsPlaceholder")}
-            value={joinList(value.tags)}
+            value={value.tags.join(", ")}
           />
         </div>
       </section>

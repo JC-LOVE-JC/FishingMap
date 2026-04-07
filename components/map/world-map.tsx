@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import Map, { Layer, Marker, Popup, Source, type MapRef } from "@vis.gl/react-maplibre";
-import { CarFront, Minus, Navigation, Plane, Plus, ShipWheel } from "lucide-react";
+import { Minus, Navigation, Plus } from "lucide-react";
 
 import { DestinationMarker } from "@/components/map/destination-marker";
 import { getTransportModeLabel, useLanguage } from "@/lib/i18n";
@@ -26,11 +26,45 @@ type WorldMapProps = {
   selectedId: string | null;
 };
 
-const transportIcons = {
-  flight: Plane,
-  boat: ShipWheel,
-  drive: CarFront
-} satisfies Record<TransportMode, ComponentType<{ className?: string }>>;
+const TRANSPORT_ROUTE_META = {
+  flight: {
+    arrowClassName: "border-emerald-700/60 bg-[linear-gradient(180deg,#1c4d2d,#0f2617)] text-emerald-100",
+    badgeClassName: "border-emerald-700/45 bg-[#163822] text-emerald-50",
+    buttonClassName:
+      "border-emerald-600/35 bg-[radial-gradient(circle_at_30%_25%,rgba(110,231,183,0.36),transparent_42%),linear-gradient(180deg,#215436,#0f2417)] text-emerald-50",
+    casingColor: "rgba(10, 24, 15, 0.34)",
+    dashArray: [1.1, 2.3] as [number, number],
+    lineColor: "#14532d"
+  },
+  drive: {
+    arrowClassName: "border-slate-500/60 bg-[linear-gradient(180deg,#5f6c79,#29313a)] text-slate-100",
+    badgeClassName: "border-slate-400/35 bg-[#495460] text-slate-50",
+    buttonClassName:
+      "border-slate-400/28 bg-[radial-gradient(circle_at_30%_25%,rgba(226,232,240,0.3),transparent_42%),linear-gradient(180deg,#7b8793,#3a424c)] text-slate-50",
+    casingColor: "rgba(34, 40, 49, 0.28)",
+    dashArray: [1.8, 2.1] as [number, number],
+    lineColor: "#cbd5e1"
+  },
+  boat: {
+    arrowClassName: "border-blue-700/60 bg-[linear-gradient(180deg,#17396e,#0d1d36)] text-blue-100",
+    badgeClassName: "border-blue-700/45 bg-[#112d57] text-blue-50",
+    buttonClassName:
+      "border-blue-500/28 bg-[radial-gradient(circle_at_30%_25%,rgba(96,165,250,0.34),transparent_42%),linear-gradient(180deg,#2959a2,#102445)] text-blue-50",
+    casingColor: "rgba(12, 24, 48, 0.34)",
+    dashArray: [2.6, 2.4] as [number, number],
+    lineColor: "#1d4ed8"
+  }
+} satisfies Record<
+  TransportMode,
+  {
+    arrowClassName: string;
+    badgeClassName: string;
+    buttonClassName: string;
+    casingColor: string;
+    dashArray: [number, number];
+    lineColor: string;
+  }
+>;
 
 export function WorldMap({
   addMode,
@@ -123,6 +157,7 @@ export function WorldMap({
               coordinates: segment.path
             },
             properties: {
+              mode: segment.mode,
               segmentIndex: segment.segmentIndex
             }
           }))
@@ -182,47 +217,73 @@ export function WorldMap({
       >
         {routeGeoJson ? (
           <Source data={routeGeoJson} id="selected-expedition-route" type="geojson">
-            <Layer
-              id="selected-expedition-route-casing"
-              paint={{
-                "line-color": "rgba(255,255,255,0.24)",
-                "line-opacity": 0.4,
-                "line-width": 8
-              }}
-              type="line"
-            />
-            <Layer
-              id="selected-expedition-route-line"
-              paint={{
-                "line-color":
-                  selectedExpedition?.waterType === "freshwater" ? "#84cc16" : "#22c55e",
-                "line-opacity": 0.82,
-                "line-width": 4,
-                "line-blur": 0.4
-              }}
-              type="line"
-            />
+            {(Object.entries(TRANSPORT_ROUTE_META) as Array<[TransportMode, (typeof TRANSPORT_ROUTE_META)[TransportMode]]>).map(
+              ([mode, meta]) => (
+                <Layer
+                  filter={["==", ["get", "mode"], mode]}
+                  id={`selected-expedition-route-casing-${mode}`}
+                  key={`route-casing-${mode}`}
+                  layout={{
+                    "line-cap": "round",
+                    "line-join": "round"
+                  }}
+                  paint={{
+                    "line-blur": 0.25,
+                    "line-color": meta.casingColor,
+                    "line-dasharray": meta.dashArray,
+                    "line-opacity": 0.64,
+                    "line-width": 8
+                  }}
+                  type="line"
+                />
+              )
+            )}
+            {(Object.entries(TRANSPORT_ROUTE_META) as Array<[TransportMode, (typeof TRANSPORT_ROUTE_META)[TransportMode]]>).map(
+              ([mode, meta]) => (
+                <Layer
+                  filter={["==", ["get", "mode"], mode]}
+                  id={`selected-expedition-route-line-${mode}`}
+                  key={`route-line-${mode}`}
+                  layout={{
+                    "line-cap": "round",
+                    "line-join": "round"
+                  }}
+                  paint={{
+                    "line-blur": 0.18,
+                    "line-color": meta.lineColor,
+                    "line-dasharray": meta.dashArray,
+                    "line-opacity": 0.9,
+                    "line-width": 4.3
+                  }}
+                  type="line"
+                />
+              )
+            )}
           </Source>
         ) : null}
 
-        {transportMarkers.map((marker) => (
-          <Marker
-            anchor="center"
-            key={`transport-arrow-${marker.destinationId}`}
-            latitude={marker.arrowLat}
-            longitude={marker.arrowLng}
-          >
-            <div
-              className="pointer-events-none flex size-7 items-center justify-center rounded-full border border-emerald-900/60 bg-[#08140a]/92 text-emerald-100 shadow-[0_10px_20px_rgba(0,0,0,0.3)]"
-              style={{ transform: `rotate(${marker.arrowBearing}deg)` }}
+        {transportMarkers.map((marker) => {
+          const routeMeta = TRANSPORT_ROUTE_META[marker.mode];
+
+          return (
+            <Marker
+              anchor="center"
+              key={`transport-arrow-${marker.destinationId}`}
+              latitude={marker.arrowLat}
+              longitude={marker.arrowLng}
             >
-              <Navigation className="size-3.5" />
-            </div>
-          </Marker>
-        ))}
+              <div
+                className={`pointer-events-none flex size-8 items-center justify-center rounded-full border shadow-[0_10px_20px_rgba(0,0,0,0.28)] ${routeMeta.arrowClassName}`}
+                style={{ transform: `rotate(${marker.arrowBearing}deg)` }}
+              >
+                <Navigation className="size-4" />
+              </div>
+            </Marker>
+          );
+        })}
 
         {transportMarkers.map((marker) => {
-          const Icon = transportIcons[marker.mode];
+          const routeMeta = TRANSPORT_ROUTE_META[marker.mode];
 
           return (
             <Marker
@@ -232,7 +293,7 @@ export function WorldMap({
               longitude={marker.lng}
             >
               <button
-                className="group relative flex size-11 items-center justify-center rounded-full border border-white/12 bg-[#05131f]/88 text-white shadow-[0_12px_24px_rgba(0,0,0,0.34)] backdrop-blur-xl transition hover:scale-105 hover:border-white/22"
+                className={`group relative flex size-[3.8rem] items-center justify-center rounded-[1.55rem] border shadow-[0_16px_30px_rgba(0,0,0,0.34)] backdrop-blur-xl transition hover:scale-[1.03] ${routeMeta.buttonClassName}`}
                 onClick={(event) => {
                   event.stopPropagation();
                   onEditTransport(marker.destinationId);
@@ -241,8 +302,9 @@ export function WorldMap({
                 onMouseLeave={() => setHoveredTransportDestinationId((current) => (current === marker.destinationId ? null : current))}
                 type="button"
               >
-                <Icon className="size-4" />
-                <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full border border-emerald-800/40 bg-[#102014] px-1 text-[0.62rem] font-semibold leading-5 text-white">
+                <span className="pointer-events-none absolute inset-[2px] rounded-[1.4rem] border border-white/12 opacity-55" />
+                <TransportIcon mode={marker.mode} />
+                <span className={`absolute -right-1.5 -top-1.5 inline-flex min-w-6 items-center justify-center rounded-full border px-1.5 text-[0.66rem] font-semibold leading-6 shadow-[0_6px_12px_rgba(0,0,0,0.28)] ${routeMeta.badgeClassName}`}>
                   {marker.journeyNumber}
                 </span>
               </button>
@@ -369,6 +431,42 @@ export function WorldMap({
       <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-[#020712]/84 via-[#020712]/28 to-transparent" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#020712]/68 via-[#020712]/18 to-transparent" />
     </div>
+  );
+}
+
+function TransportIcon({ mode }: { mode: TransportMode }) {
+  if (mode === "flight") {
+    return (
+      <svg aria-hidden="true" className="size-9 drop-shadow-[0_4px_6px_rgba(0,0,0,0.22)]" viewBox="0 0 64 64">
+        <path d="M34 7L41 12L37 28L56 23L60 27L42 36L46 52L41 56L32 40L21 48L17 45L23 35L9 31L5 26L24 25L34 7Z" fill="#22c55e" stroke="#dcfce7" strokeWidth="2.4" strokeLinejoin="round" />
+        <path d="M34 10L38 13L34 27L51 24L41 33L44 48L32 38L22 45L26 34L14 30L29 28L34 10Z" fill="#166534" opacity="0.35" />
+      </svg>
+    );
+  }
+
+  if (mode === "drive") {
+    return (
+      <svg aria-hidden="true" className="size-9 drop-shadow-[0_4px_6px_rgba(0,0,0,0.22)]" viewBox="0 0 64 64">
+        <circle cx="19" cy="45" fill="#0f172a" r="6.5" />
+        <circle cx="45" cy="45" fill="#0f172a" r="6.5" />
+        <circle cx="19" cy="45" fill="#e2e8f0" r="3" />
+        <circle cx="45" cy="45" fill="#e2e8f0" r="3" />
+        <path d="M14 24H36L45 31H54C56.8 31 59 33.2 59 36V42H9V32C9 27.6 12.6 24 17 24H14Z" fill="#94a3b8" stroke="#f8fafc" strokeLinejoin="round" strokeWidth="2.4" />
+        <path d="M21 24L26 16H40L43 24" stroke="#f8fafc" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" />
+        <path d="M21 31H31M36 31H45" stroke="#334155" strokeLinecap="round" strokeWidth="2.6" />
+        <path d="M14 24H36L45 31H54C56.8 31 59 33.2 59 36V38H9V32C9 27.6 12.6 24 17 24H14Z" fill="#ffffff" opacity="0.12" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg aria-hidden="true" className="size-9 drop-shadow-[0_4px_6px_rgba(0,0,0,0.22)]" viewBox="0 0 64 64">
+      <path d="M14 40H54L47 48H24C19 48 15.2 45.2 14 40Z" fill="#2563eb" stroke="#dbeafe" strokeLinejoin="round" strokeWidth="2.4" />
+      <path d="M28 19H38L43 32H24L28 19Z" fill="#eff6ff" stroke="#dbeafe" strokeLinejoin="round" strokeWidth="2.4" />
+      <path d="M32 14V32" stroke="#dbeafe" strokeLinecap="round" strokeWidth="2.4" />
+      <path d="M13 51C16 49.4 18.5 49.4 21.5 51C24.5 52.6 27 52.6 30 51C33 49.4 35.5 49.4 38.5 51C41.5 52.6 44 52.6 47 51C50 49.4 52.5 49.4 55.5 51" stroke="#93c5fd" strokeLinecap="round" strokeWidth="2.4" />
+      <path d="M16 40H52L46 46H25C21 46 17.9 43.8 16 40Z" fill="#ffffff" opacity="0.12" />
+    </svg>
   );
 }
 

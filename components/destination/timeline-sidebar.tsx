@@ -76,11 +76,17 @@ export function TimelineSidebar({
                             node: "bg-emerald-400/85",
                             line: "bg-emerald-500/30"
                           }
-                        : {
-                            card: "border-emerald-950/75 bg-[#07150b]",
-                            node: "bg-emerald-300/85",
-                            line: "bg-emerald-400/24"
-                          };
+                        : expedition.waterType === "urban"
+                          ? {
+                              card: "border-slate-700/75 bg-[#10161b]",
+                              node: "bg-slate-200/90",
+                              line: "bg-slate-300/28"
+                            }
+                          : {
+                              card: "border-sky-950/75 bg-[#071221]",
+                              node: "bg-sky-300/85",
+                              line: "bg-sky-400/24"
+                            };
                     const leadDestination = expedition.destinations[0];
                     const date = getTimelineDate(expedition.startDate || expedition.endDate, locale);
 

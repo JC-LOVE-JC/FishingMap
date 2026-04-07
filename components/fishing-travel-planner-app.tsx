@@ -55,7 +55,8 @@ export function FishingTravelPlannerApp() {
   }
 
   useEffect(() => {
-    const stored = parseStoredDestinations(window.localStorage.getItem(STORAGE_KEY));
+    const stored = parseStoredDestinations(window.localStorage.getItem(STORAGE_KEY))
+      ?? parseStoredDestinations(window.localStorage.getItem("fishing-travel-planner.destinations.v5"));
     const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
 
     if (stored?.length) {

@@ -252,7 +252,7 @@ const translations: Record<Language, TranslationDictionary> = {
     "form.mapPickManual": "Map pick mode is active. Click directly on the map for a manual stop placement.",
     "form.locationChoiceHint": "Choosing a result will place the stop at that city's center and keep the exact coordinates editable below.",
     "form.status": "Status",
-    "form.waterType": "Water Type",
+    "form.waterType": "Region Type",
     "form.title": "Stop Name",
     "form.titlePlaceholder": "Galapagos Outer Reef",
     "form.expeditionName": "Trip Name",
@@ -281,7 +281,7 @@ const translations: Record<Language, TranslationDictionary> = {
     "form.notes": "Notes",
     "form.notesPlaceholder": "Record planning notes, memories, catch details, logistics, or tackle ideas.",
     "form.species": "Species",
-    "form.speciesPlaceholder": "Giant trevally, sailfish, yellowfin tuna",
+    "form.speciesPlaceholder": "Type mah, gt, tuna, tarpon...",
     "form.techniques": "Techniques",
     "form.techniquesPlaceholder": "Popping, fly, jigging",
     "form.tags": "Tags",
@@ -414,7 +414,7 @@ const translations: Record<Language, TranslationDictionary> = {
     "form.mapPickManual": "地图选点模式已开启。请直接点击地图来手动放置 stop。",
     "form.locationChoiceHint": "选择搜索结果后，站点会自动落在该城市中心，下方坐标仍可继续微调。",
     "form.status": "状态",
-    "form.waterType": "水域类型",
+    "form.waterType": "地域类型",
     "form.title": "站点名称",
     "form.titlePlaceholder": "Galapagos Outer Reef",
     "form.expeditionName": "行程名称",
@@ -443,7 +443,7 @@ const translations: Record<Language, TranslationDictionary> = {
     "form.notes": "备注",
     "form.notesPlaceholder": "记录计划、回忆、鱼获细节、后勤安排或装备想法。",
     "form.species": "鱼种",
-    "form.speciesPlaceholder": "GT、旗鱼、黄鳍金枪鱼",
+    "form.speciesPlaceholder": "输入 mah、gt、tuna、tarpon...",
     "form.techniques": "钓法",
     "form.techniquesPlaceholder": "波扒、飞蝇、铁板",
     "form.tags": "标签",
@@ -564,8 +564,8 @@ export function getStatusLabel(status: DestinationStatus, language: Language) {
 
 export function getWaterTypeLabel(waterType: WaterType, language: Language) {
   const table = {
-    en: { saltwater: "Saltwater", freshwater: "Freshwater" },
-    zh: { saltwater: "海水", freshwater: "淡水" }
+    en: { saltwater: "Saltwater", freshwater: "Freshwater", urban: "Urban" },
+    zh: { saltwater: "海水", freshwater: "淡水", urban: "城市" }
   } satisfies Record<Language, Record<WaterType, string>>;
 
   return table[language][waterType];

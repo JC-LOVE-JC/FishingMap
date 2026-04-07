@@ -1,5 +1,6 @@
 export type DestinationStatus = "planned" | "visited";
-export type WaterType = "saltwater" | "freshwater";
+export type WaterType = "saltwater" | "freshwater" | "urban";
+export type RegionType = WaterType;
 export type TransportMode = "flight" | "boat" | "drive";
 
 export type PhotoItem = {
