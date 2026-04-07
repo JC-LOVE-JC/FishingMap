@@ -326,11 +326,10 @@ export function DestinationPanel({
             {mode === "transport" && transportDraft && transportTarget ? (
               <motion.div
                 animate={{ opacity: 1, x: 0 }}
-                className="relative flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-5 md:p-6"
+                className="relative flex-1 overflow-y-auto p-5 md:p-6"
                 exit={{ opacity: 0, x: 16 }}
                 initial={{ opacity: 0, x: 16 }}
                 key={`transport-${transportDraft.destinationId}`}
-                style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}
                 transition={{ duration: 0.28, ease: "easeOut" }}
               >
                 <TransportForm
@@ -347,11 +346,10 @@ export function DestinationPanel({
             {mode === "form" && draftDestination && formMode ? (
               <motion.div
                 animate={{ opacity: 1, x: 0 }}
-                className="relative flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-5 md:p-6"
+                className="relative flex-1 overflow-y-auto p-5 md:p-6"
                 exit={{ opacity: 0, x: 16 }}
                 initial={{ opacity: 0, x: 16 }}
                 key={`form-${draftDestination.id}`}
-                style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}
                 transition={{ duration: 0.28, ease: "easeOut" }}
               >
                 <DestinationForm
@@ -373,11 +371,10 @@ export function DestinationPanel({
             {mode === "details" && selectedDestination ? (
               <motion.div
                 animate={{ opacity: 1, x: 0 }}
-                className="relative flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-5 md:p-6"
+                className="relative flex-1 overflow-y-auto p-5 md:p-6"
                 exit={{ opacity: 0, x: 16 }}
                 initial={{ opacity: 0, x: 16 }}
                 key={selectedDestination.id}
-                style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}
                 transition={{ duration: 0.28, ease: "easeOut" }}
               >
                 <div className="space-y-5">
@@ -609,11 +606,10 @@ export function DestinationPanel({
             {mode === "overview" ? (
               <motion.div
                 animate={{ opacity: 1, x: 0 }}
-                className="relative flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-5 md:p-6"
+                className="relative flex-1 overflow-y-auto p-5 md:p-6"
                 exit={{ opacity: 0, x: 16 }}
                 initial={{ opacity: 0, x: 16 }}
                 key="overview"
-                style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}
                 transition={{ duration: 0.28, ease: "easeOut" }}
               >
                 <div className="space-y-5">
