@@ -301,8 +301,7 @@ export function DestinationPanel({
                 </div>
               ) : null}
 
-              {hasGuideOrBoatInfo ? (
-                <details className="panel-section group overflow-hidden rounded-[28px]">
+              <details className="panel-section group overflow-hidden rounded-[28px]" open={hasGuideOrBoatInfo}>
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 marker:hidden">
                     <div>
                       <p className="eyebrow">{t("overview.guideBoatInfo")}</p>
@@ -313,8 +312,6 @@ export function DestinationPanel({
                   </summary>
 
                   <div className="grid gap-4 border-t border-white/8 px-5 pb-5 pt-4">
-                    {(selectedDestination.guideInfo?.name?.trim() ||
-                      selectedDestination.guideInfo?.contact?.trim()) ? (
                       <div className="rounded-[24px] border border-white/8 bg-[#07131d] p-4">
                         <div className="flex items-center gap-2">
                           <UserRound className="size-4 text-gold-200" />
@@ -340,9 +337,7 @@ export function DestinationPanel({
                           </div>
                         </div>
                       </div>
-                    ) : null}
 
-                    {selectedDestination.boatInfo ? (
                       <div className="rounded-[24px] border border-white/8 bg-[#07131d] p-4">
                         <div className="flex items-center gap-2">
                           <Ship className="size-4 text-lagoon-300" />
@@ -352,23 +347,23 @@ export function DestinationPanel({
                           <InfoField
                             label={t("overview.boatName")}
                             fallback={t("overview.notProvided")}
-                            value={selectedDestination.boatInfo.boatName}
+                            value={selectedDestination.boatInfo?.boatName}
                           />
                           <InfoField
                             label={t("overview.length")}
                             fallback={t("overview.notProvided")}
-                            value={selectedDestination.boatInfo.length}
+                            value={selectedDestination.boatInfo?.length}
                           />
                           <InfoField
                             label={t("overview.boatType")}
                             fallback={t("overview.notProvided")}
-                            value={selectedDestination.boatInfo.boatType}
+                            value={selectedDestination.boatInfo?.boatType}
                           />
                           <InfoField
                             label={t("overview.maxAnglers")}
                             fallback={t("overview.notProvided")}
                             value={
-                              selectedDestination.boatInfo.maxAnglers
+                              selectedDestination.boatInfo?.maxAnglers
                                 ? String(selectedDestination.boatInfo.maxAnglers)
                                 : ""
                             }
@@ -377,7 +372,7 @@ export function DestinationPanel({
                             <InfoField
                               label={t("overview.engineSetup")}
                               fallback={t("overview.notProvided")}
-                              value={selectedDestination.boatInfo.engineSetup}
+                              value={selectedDestination.boatInfo?.engineSetup}
                             />
                           </div>
                         </div>
@@ -401,10 +396,8 @@ export function DestinationPanel({
                           </div>
                         </div>
                       </div>
-                    ) : null}
                   </div>
                 </details>
-              ) : null}
 
               {selectedDestination.species.length ? (
                 <div className="panel-section rounded-[28px] p-5">
