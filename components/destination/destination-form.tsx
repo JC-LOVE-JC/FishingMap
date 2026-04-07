@@ -1,17 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 
-import {
-  ChevronDown,
-  ImagePlus,
-  LoaderCircle,
-  MapPinned,
-  Plus,
-  Search,
-  Trash2,
-  UploadCloud
-} from "lucide-react";
+import { ImagePlus, LoaderCircle, MapPinned, Plus, Search, Trash2, UploadCloud } from "lucide-react";
 
 import { FishSpeciesSelector } from "@/components/destination/fish-species-selector";
 import { TechniqueSelector } from "@/components/destination/technique-selector";
@@ -21,10 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getStatusLabel, getWaterTypeLabel, useLanguage } from "@/lib/i18n";
 import type {
-  BoatInfo,
   Destination,
   DestinationStatus,
-  GuideInfo,
   LocationSuggestion,
   PhotoItem,
   WaterType
@@ -65,8 +54,6 @@ export function DestinationForm({
   value
 }: DestinationFormProps) {
   const { language, t } = useLanguage();
-  const [guideBoatOpen, setGuideBoatOpen] = useState(() => hasGuideBoatData(value));
-  const hadGuideBoatDataRef = useRef(hasGuideBoatData(value));
   const [locationQuery, setLocationQuery] = useState(buildLocationQuery(value));
   const [locationResults, setLocationResults] = useState<LocationSuggestion[]>([]);
   const [isSearchingLocations, setIsSearchingLocations] = useState(false);
@@ -88,16 +75,6 @@ export function DestinationForm({
   useEffect(() => {
     setLocationQuery(buildLocationQuery(value));
   }, [value.city, value.region, value.country]);
-
-  useEffect(() => {
-    const hasData = hasGuideBoatData(value);
-
-    if (hasData && !hadGuideBoatDataRef.current) {
-      setGuideBoatOpen(true);
-    }
-
-    hadGuideBoatDataRef.current = hasData;
-  }, [value]);
 
   useEffect(() => {
     const query = locationQuery.trim();
@@ -157,40 +134,6 @@ export function DestinationForm({
           : photo
       )
     );
-  }
-
-  function updateGuideField<Key extends keyof GuideInfo>(key: Key, nextValue: GuideInfo[Key]) {
-    onChange({
-      ...value,
-      guideInfo: {
-        name: "",
-        contact: "",
-        ...value.guideInfo,
-        [key]: nextValue
-      }
-    });
-  }
-
-  function updateBoatField<Key extends keyof BoatInfo>(key: Key, nextValue: BoatInfo[Key]) {
-    onChange({
-      ...value,
-      boatInfo: {
-        boatName: "",
-        length: "",
-        boatType: "",
-        maxAnglers: undefined,
-        engineSetup: "",
-        fightingChair: false,
-        liveBaitTank: false,
-        outriggers: false,
-        birdRadar: false,
-        tubes: false,
-        hasCabin: false,
-        hasToilet: false,
-        ...value.boatInfo,
-        [key]: nextValue
-      }
-    });
   }
 
   function addPhotoRow() {
@@ -663,177 +606,6 @@ export function DestinationForm({
         </div>
       </section>
 
-      <details
-        className="panel-section group overflow-hidden rounded-[28px]"
-        onToggle={(event) => setGuideBoatOpen((event.currentTarget as HTMLDetailsElement).open)}
-        open={guideBoatOpen}
-      >
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 marker:hidden">
-          <div>
-            <p className="eyebrow">{t("form.guideBoatInfo")}</p>
-            <p className="mt-1 text-sm text-white/62">{t("form.guideBoatDescription")}</p>
-          </div>
-          <span className="rounded-full border border-white/10 bg-white/5 p-2 text-white/55 transition group-open:rotate-180">
-            <ChevronDown className="size-4" />
-          </span>
-        </summary>
-
-        <div className="grid gap-4 border-t border-white/8 px-4 pb-4 pt-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <label className="eyebrow" htmlFor="guideName">
-              {t("form.guideName")}
-            </label>
-            <Input
-              id="guideName"
-              onChange={(event) => updateGuideField("name", event.target.value)}
-              value={value.guideInfo?.name || ""}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="eyebrow" htmlFor="guideContact">
-              {t("form.guideContact")}
-            </label>
-            <Input
-              id="guideContact"
-              onChange={(event) => updateGuideField("contact", event.target.value)}
-              value={value.guideInfo?.contact || ""}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="eyebrow" htmlFor="boatName">
-              {t("form.boatName")}
-            </label>
-            <Input
-              id="boatName"
-              onChange={(event) => updateBoatField("boatName", event.target.value)}
-              value={value.boatInfo?.boatName || ""}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="eyebrow" htmlFor="boatLength">
-              {t("form.boatLength")}
-            </label>
-            <Input
-              id="boatLength"
-              onChange={(event) => updateBoatField("length", event.target.value)}
-              placeholder="38 ft"
-              value={value.boatInfo?.length || ""}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="eyebrow" htmlFor="boatType">
-              {t("form.boatType")}
-            </label>
-            <Input
-              id="boatType"
-              onChange={(event) => updateBoatField("boatType", event.target.value)}
-              placeholder="Center console"
-              value={value.boatInfo?.boatType || ""}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="eyebrow" htmlFor="maxAnglers">
-              {t("form.maxAnglers")}
-            </label>
-            <Input
-              id="maxAnglers"
-              min={1}
-              onChange={(event) =>
-                updateBoatField(
-                  "maxAnglers",
-                  event.target.value ? Number(event.target.value) : undefined
-                )
-              }
-              type="number"
-              value={value.boatInfo?.maxAnglers ?? ""}
-            />
-          </div>
-
-          <div className="space-y-2 md:col-span-2">
-            <label className="eyebrow" htmlFor="engineSetup">
-              {t("form.engineSetup")}
-            </label>
-            <Input
-              id="engineSetup"
-              onChange={(event) => updateBoatField("engineSetup", event.target.value)}
-              placeholder="Twin 300 hp outboards"
-              value={value.boatInfo?.engineSetup || ""}
-            />
-          </div>
-
-          <div className="grid gap-3 rounded-[22px] border border-white/8 bg-white/5 p-4 md:col-span-2 md:grid-cols-2">
-            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#06121c] px-4 py-3 text-sm text-white/72">
-              <input
-                checked={Boolean(value.boatInfo?.fightingChair)}
-                className="size-4 rounded border-white/20 bg-transparent"
-                onChange={(event) => updateBoatField("fightingChair", event.target.checked)}
-                type="checkbox"
-              />
-              {t("form.fightingChair")}
-            </label>
-            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#06121c] px-4 py-3 text-sm text-white/72">
-              <input
-                checked={Boolean(value.boatInfo?.liveBaitTank)}
-                className="size-4 rounded border-white/20 bg-transparent"
-                onChange={(event) => updateBoatField("liveBaitTank", event.target.checked)}
-                type="checkbox"
-              />
-              {t("form.liveBaitTank")}
-            </label>
-            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#06121c] px-4 py-3 text-sm text-white/72">
-              <input
-                checked={Boolean(value.boatInfo?.outriggers)}
-                className="size-4 rounded border-white/20 bg-transparent"
-                onChange={(event) => updateBoatField("outriggers", event.target.checked)}
-                type="checkbox"
-              />
-              {t("form.outriggers")}
-            </label>
-            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#06121c] px-4 py-3 text-sm text-white/72">
-              <input
-                checked={Boolean(value.boatInfo?.birdRadar)}
-                className="size-4 rounded border-white/20 bg-transparent"
-                onChange={(event) => updateBoatField("birdRadar", event.target.checked)}
-                type="checkbox"
-              />
-              {t("form.birdRadar")}
-            </label>
-            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#06121c] px-4 py-3 text-sm text-white/72">
-              <input
-                checked={Boolean(value.boatInfo?.tubes)}
-                className="size-4 rounded border-white/20 bg-transparent"
-                onChange={(event) => updateBoatField("tubes", event.target.checked)}
-                type="checkbox"
-              />
-              {t("form.tubes")}
-            </label>
-            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#06121c] px-4 py-3 text-sm text-white/72">
-              <input
-                checked={Boolean(value.boatInfo?.hasCabin)}
-                className="size-4 rounded border-white/20 bg-transparent"
-                onChange={(event) => updateBoatField("hasCabin", event.target.checked)}
-                type="checkbox"
-              />
-              {t("form.hasCabin")}
-            </label>
-            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#06121c] px-4 py-3 text-sm text-white/72 md:col-span-2">
-              <input
-                checked={Boolean(value.boatInfo?.hasToilet)}
-                className="size-4 rounded border-white/20 bg-transparent"
-                onChange={(event) => updateBoatField("hasToilet", event.target.checked)}
-                type="checkbox"
-              />
-              {t("form.hasToilet")}
-            </label>
-          </div>
-        </div>
-      </details>
-
       <section className="panel-section space-y-4 rounded-[28px] p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -926,23 +698,4 @@ export function DestinationForm({
 
 function buildLocationQuery(value: Destination) {
   return [value.city, value.region, value.country].filter(Boolean).join(", ");
-}
-
-function hasGuideBoatData(value: Destination) {
-  return Boolean(
-    value.guideInfo?.name?.trim() ||
-      value.guideInfo?.contact?.trim() ||
-      value.boatInfo?.boatName?.trim() ||
-      value.boatInfo?.length?.trim() ||
-      value.boatInfo?.boatType?.trim() ||
-      value.boatInfo?.engineSetup?.trim() ||
-      value.boatInfo?.maxAnglers ||
-      value.boatInfo?.fightingChair ||
-      value.boatInfo?.liveBaitTank ||
-      value.boatInfo?.outriggers ||
-      value.boatInfo?.birdRadar ||
-      value.boatInfo?.tubes ||
-      value.boatInfo?.hasCabin ||
-      value.boatInfo?.hasToilet
-  );
 }
