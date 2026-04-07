@@ -126,6 +126,8 @@ export function DestinationPanel({
           (destination) => (destination.stopOrder ?? 1) === (transportTarget.stopOrder ?? 1) - 1
         ) ?? null
       : null;
+  const mobilePanelHeightClass =
+    mode === "transport" ? "max-h-[56vh] min-h-[19rem]" : "max-h-[68vh] min-h-[14rem]";
 
   return (
     <>
@@ -173,7 +175,8 @@ export function DestinationPanel({
 
         <div className="order-1 w-full lg:order-2 lg:h-full lg:w-[30rem]">
         <div className={cn(
-          "pointer-events-auto relative flex max-h-[68vh] min-h-[14rem] flex-col overflow-hidden rounded-[30px] border border-white/8 bg-[#030d17]/96 shadow-[0_30px_90px_rgba(0,0,0,0.48)] backdrop-blur-2xl lg:h-full lg:max-h-none lg:min-h-0",
+          "pointer-events-auto relative flex flex-col overflow-hidden rounded-[30px] border border-white/8 bg-[#030d17]/96 shadow-[0_30px_90px_rgba(0,0,0,0.48)] backdrop-blur-2xl lg:h-full lg:max-h-none lg:min-h-0",
+          mobilePanelHeightClass,
           activeTheme.panelClassName
         )}>
           <div className="px-5 pt-3 lg:hidden">
@@ -184,7 +187,7 @@ export function DestinationPanel({
             {mode === "transport" && transportDraft && transportTarget ? (
               <motion.div
                 animate={{ opacity: 1, x: 0 }}
-                className="relative h-full overflow-y-auto p-5 md:p-6"
+                className="relative h-full overflow-y-auto p-5 pb-4 md:p-6"
                 exit={{ opacity: 0, x: 16 }}
                 initial={{ opacity: 0, x: 16 }}
                 key={`transport-${transportDraft.destinationId}`}

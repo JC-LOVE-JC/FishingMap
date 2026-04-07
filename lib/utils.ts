@@ -121,44 +121,24 @@ export function formatDateRange(
   }
 
   if (destination.startDate && destination.endDate) {
-    const sameMonth =
-      destination.startDate.slice(0, 7) === destination.endDate.slice(0, 7);
-    const sameYear =
-      destination.startDate.slice(0, 4) === destination.endDate.slice(0, 4);
-
     const start = new Date(`${destination.startDate}T00:00:00`);
     const end = new Date(`${destination.endDate}T00:00:00`);
-
-    if (sameMonth) {
-      return `${start.toLocaleDateString(locale, {
-        month: "short",
-        day: "numeric"
-      })} - ${end.toLocaleDateString(locale, {
-        day: "numeric",
-        year: "numeric"
-      })}`;
-    }
-
-    if (sameYear) {
-      return `${start.toLocaleDateString(locale, {
-        month: "short",
-        day: "numeric"
-      })} - ${end.toLocaleDateString(locale, {
-        month: "short",
-        day: "numeric",
-        year: "numeric"
-      })}`;
-    }
-
-    return `${start.toLocaleDateString(locale, {
+    const startLabel = start.toLocaleDateString(locale, {
       month: "short",
       day: "numeric",
       year: "numeric"
-    })} - ${end.toLocaleDateString(locale, {
+    });
+    const endLabel = end.toLocaleDateString(locale, {
       month: "short",
       day: "numeric",
       year: "numeric"
-    })}`;
+    });
+
+    if (destination.startDate === destination.endDate) {
+      return startLabel;
+    }
+
+    return `${startLabel} - ${endLabel}`;
   }
 
   const single = new Date(`${destination.startDate || destination.endDate}T00:00:00`);

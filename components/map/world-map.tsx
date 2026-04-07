@@ -472,8 +472,21 @@ function TransportIcon({ mode }: { mode: TransportMode }) {
   if (mode === "flight") {
     return (
       <svg aria-hidden="true" className="size-9 drop-shadow-[0_4px_6px_rgba(0,0,0,0.22)]" viewBox="0 0 64 64">
-        <path d="M34 7L41 12L37 28L56 23L60 27L42 36L46 52L41 56L32 40L21 48L17 45L23 35L9 31L5 26L24 25L34 7Z" fill="#22c55e" stroke="#dcfce7" strokeWidth="2.4" strokeLinejoin="round" />
-        <path d="M34 10L38 13L34 27L51 24L41 33L44 48L32 38L22 45L26 34L14 30L29 28L34 10Z" fill="#166534" opacity="0.35" />
+        <path
+          d="M12 34.8L14.7 29.7L27.8 28.7L39.4 11.5C40.7 9.6 42.8 8.4 45.1 8.4C48.4 8.4 50.8 11.4 50.2 14.6L46.8 27.4L55 26.9L58.7 30.5L46 35.4L43 50.9L38.1 54.4L34.4 39.5L24.8 43.7L20.8 40.6L27.1 34.8H12Z"
+          fill="#22c55e"
+          stroke="#ecfdf5"
+          strokeLinejoin="round"
+          strokeWidth="2.2"
+        />
+        <path
+          d="M44.2 11.6C45.7 11.3 47.1 12.6 46.8 14.1L43.7 27.8L52.6 27.3L43.6 33L40.8 47L38.5 37.4L27.7 42.1L32.8 33.6H17.1L29.5 31.8L42.6 12.1C43 11.8 43.6 11.7 44.2 11.6Z"
+          fill="#166534"
+          opacity="0.33"
+        />
+        <path d="M31.2 30.7H43.6" stroke="#dcfce7" strokeLinecap="round" strokeWidth="1.8" />
+        <path d="M41 17.6L38.6 28.4" stroke="#dcfce7" strokeLinecap="round" strokeWidth="1.6" opacity="0.9" />
+        <circle cx="45.7" cy="13.8" fill="#f0fdf4" r="1.4" />
       </svg>
     );
   }

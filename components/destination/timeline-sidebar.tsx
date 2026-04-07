@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useMemo, useRef } from "react";
+
 import { CalendarRange, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 
 import { formatStopCount, formatStopOrdinal, useLanguage } from "@/lib/i18n";
@@ -28,6 +30,27 @@ export function TimelineSidebar({
   selectedId
 }: TimelineSidebarProps) {
   const { language, locale, t } = useLanguage();
+  const expeditionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const timelineAnchorId = useMemo(() => getTimelineAnchorId(sections), [sections]);
+
+  useEffect(() => {
+    if (collapsed || !timelineAnchorId) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      const target = expeditionRefs.current[timelineAnchorId];
+
+      target?.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+    }, 180);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [collapsed, timelineAnchorId]);
 
   return (
     <div
@@ -98,6 +121,9 @@ export function TimelineSidebar({
                             : `${accent.card} hover:bg-[#102014]`
                         }`}
                         key={expedition.id}
+                        ref={(node) => {
+                          expeditionRefs.current[expedition.id] = node;
+                        }}
                         onClick={() => {
                           if (leadDestinationId) {
                             onSelectDestination(leadDestinationId);
@@ -242,4 +268,44 @@ function getTimelineDate(value?: string, locale = "en-US") {
     month: date.toLocaleDateString(locale, { month: "short" }),
     day: date.toLocaleDateString(locale, { day: "2-digit" })
   };
+}
+
+function getTimelineAnchorId(sections: TimelineSidebarProps["sections"]) {
+  const now = new Date();
+  const expeditions = sections.flatMap((section) => section.items);
+
+  const current = expeditions.find((expedition) => isCurrentExpedition(expedition, now));
+
+  if (current) {
+    return current.id;
+  }
+
+  const next = expeditions
+    .filter((expedition) => getExpeditionStartTime(expedition) >= now.getTime())
+    .sort((a, b) => getExpeditionStartTime(a) - getExpeditionStartTime(b))[0];
+
+  if (next) {
+    return next.id;
+  }
+
+  const latestPast = expeditions
+    .filter((expedition) => getExpeditionEndTime(expedition) < now.getTime())
+    .sort((a, b) => getExpeditionEndTime(b) - getExpeditionEndTime(a))[0];
+
+  return latestPast?.id ?? expeditions[0]?.id ?? null;
+}
+
+function isCurrentExpedition(expedition: TimelineExpedition, now: Date) {
+  const start = getExpeditionStartTime(expedition);
+  const end = getExpeditionEndTime(expedition);
+
+  return start <= now.getTime() && end >= now.getTime();
+}
+
+function getExpeditionStartTime(expedition: Pick<TimelineExpedition, "startDate" | "endDate">) {
+  return new Date(`${expedition.startDate || expedition.endDate || "2100-01-01"}T00:00:00`).getTime();
+}
+
+function getExpeditionEndTime(expedition: Pick<TimelineExpedition, "startDate" | "endDate">) {
+  return new Date(`${expedition.endDate || expedition.startDate || "2100-01-01"}T23:59:59`).getTime();
 }

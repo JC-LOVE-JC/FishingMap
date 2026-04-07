@@ -66,33 +66,6 @@ export function TransportForm({
       </div>
 
       <section className="panel-section space-y-4 rounded-[28px] p-4">
-        <p className="eyebrow">{t("transport.mode")}</p>
-        <div className="flex flex-wrap gap-2">
-          {(Object.keys(modeIcons) as TransportMode[]).map((mode) => {
-            const Icon = modeIcons[mode];
-            const meta = TRANSPORT_MODE_META[mode];
-
-            return (
-              <button
-                className={cn(
-                  "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs uppercase tracking-[0.22em] transition",
-                  value.mode === mode
-                    ? meta.accentClassName
-                    : "border-white/10 bg-white/5 text-white/55 hover:bg-white/8"
-                )}
-                key={mode}
-                onClick={() => updateField("mode", mode)}
-                type="button"
-              >
-                <Icon className="size-4" />
-                {getTransportModeLabel(mode, language)}
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="space-y-4">
         <div className="space-y-2">
           <label className="eyebrow" htmlFor="segmentName">
             {t("transport.name")}
@@ -130,7 +103,36 @@ export function TransportForm({
             />
           </div>
         </div>
+      </section>
 
+      <section className="panel-section space-y-4 rounded-[28px] p-4">
+        <p className="eyebrow">{t("transport.mode")}</p>
+        <div className="flex flex-wrap gap-2">
+          {(Object.keys(modeIcons) as TransportMode[]).map((mode) => {
+            const Icon = modeIcons[mode];
+            const meta = TRANSPORT_MODE_META[mode];
+
+            return (
+              <button
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs uppercase tracking-[0.22em] transition",
+                  value.mode === mode
+                    ? meta.accentClassName
+                    : "border-white/10 bg-white/5 text-white/55 hover:bg-white/8"
+                )}
+                key={mode}
+                onClick={() => updateField("mode", mode)}
+                type="button"
+              >
+                <Icon className="size-4" />
+                {getTransportModeLabel(mode, language)}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="space-y-4">
         <div className="space-y-2">
           <label className="eyebrow" htmlFor="transportNotes">
             {t("transport.notes")}
