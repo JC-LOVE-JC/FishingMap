@@ -88,6 +88,10 @@ export function WorldMap({
   const [mapZoom, setMapZoom] = useState(INITIAL_VIEW_STATE.zoom);
   const { language, t } = useLanguage();
 
+  function syncMapZoom(nextZoom: number) {
+    setMapZoom(Number(nextZoom.toFixed(3)));
+  }
+
   useEffect(() => {
     if (!focusTarget || !mapRef.current) {
       return;
@@ -206,11 +210,20 @@ export function WorldMap({
         sky={MAP_SKY}
         style={{ height: "100%", width: "100%" }}
         onMove={(event) => {
-          setMapZoom(event.viewState.zoom);
+          syncMapZoom(event.viewState.zoom);
+        }}
+        onMoveEnd={(event) => {
+          syncMapZoom(event.viewState.zoom);
+        }}
+        onZoom={(event) => {
+          syncMapZoom(event.viewState.zoom);
+        }}
+        onZoomEnd={(event) => {
+          syncMapZoom(event.viewState.zoom);
         }}
         onLoad={() => {
           mapRef.current?.getMap().setProjection({ type: "globe" });
-          setMapZoom(mapRef.current?.getZoom() ?? INITIAL_VIEW_STATE.zoom);
+          syncMapZoom(mapRef.current?.getZoom() ?? INITIAL_VIEW_STATE.zoom);
         }}
         onClick={(event) => {
           if (!addMode) {
@@ -308,7 +321,7 @@ export function WorldMap({
                 }}
                 onMouseEnter={() => setHoveredTransportDestinationId(marker.destinationId)}
                 onMouseLeave={() => setHoveredTransportDestinationId((current) => (current === marker.destinationId ? null : current))}
-                style={{ transform: `scale(${transportScale})` }}
+                style={{ transform: `scale(${transportScale})`, transformOrigin: "center center" }}
                 type="button"
               >
                 <span className="pointer-events-none absolute inset-[2px] rounded-[1.4rem] border border-white/12 opacity-55" />
@@ -451,9 +464,20 @@ function TransportIcon({ mode }: { mode: TransportMode }) {
   if (mode === "flight") {
     return (
       <svg aria-hidden="true" className="size-9 drop-shadow-[0_4px_6px_rgba(0,0,0,0.22)]" viewBox="0 0 64 64">
-        <path d="M33 6L39 10.5L36.5 25L52 20L58.5 24L43.5 33L47 48.5L42 53L31.5 39L20.5 47L16 43.5L22 33.5L9 29.5L5.5 24.5L23.5 22.5L33 6Z" fill="#22c55e" stroke="#DCFCE7" strokeWidth="2" strokeLinejoin="round" />
-        <path d="M33 9L36.8 12L34.2 24.8L48 21.2L40.5 29L43.2 43L32 35.5L23.2 42L26.2 31L14 27.8L26.8 26.2L33 9Z" fill="#166534" opacity="0.34" />
-        <path d="M28 22L38.5 27" stroke="#ECFDF5" strokeLinecap="round" strokeWidth="1.8" opacity="0.9" />
+        <path
+          d="M9 33.2L27.5 28.8L36.8 10.5C37.7 8.8 39.5 7.7 41.5 7.7C44.5 7.7 46.8 10.4 46.3 13.4L42.8 29.4L55 34.2C56.9 35 58.1 36.8 58.1 38.9C58.1 41.2 56.7 43.3 54.6 44L42.2 48.3L45 56.2L40.1 58.8L31.9 50.1L23.2 55.6L19.6 52.1L24.6 43.8L14 40.7L9 33.2Z"
+          fill="#22C55E"
+          stroke="#F0FDF4"
+          strokeLinejoin="round"
+          strokeWidth="1.9"
+        />
+        <path
+          d="M40.8 12.5L37.8 29.5L50.6 34.6L38.9 38.9L41.2 51.7L31.8 44.2L23.8 49.3L28.2 39.6L17.7 36.7L29.9 33.3L40.8 12.5Z"
+          fill="#166534"
+          opacity="0.28"
+        />
+        <path d="M29.8 31.9L45.4 26.9" opacity="0.8" stroke="#ECFDF5" strokeLinecap="round" strokeWidth="1.5" />
+        <path d="M28.6 41.2L38.1 47.8" opacity="0.8" stroke="#ECFDF5" strokeLinecap="round" strokeWidth="1.5" />
       </svg>
     );
   }
@@ -465,11 +489,18 @@ function TransportIcon({ mode }: { mode: TransportMode }) {
         <circle cx="45" cy="45" fill="#0f172a" r="6.5" />
         <circle cx="19" cy="45" fill="#e2e8f0" r="3" />
         <circle cx="45" cy="45" fill="#e2e8f0" r="3" />
-        <path d="M12 28L18 20H38L47 25L54 26.5C57.6 27.3 60 30.4 60 34V41H8V33C8 30.2 9.6 27.7 12 28Z" fill="#CBD5E1" stroke="#F8FAFC" strokeLinejoin="round" strokeWidth="2" />
-        <path d="M19 20H39L43 27H16L19 20Z" fill="#94A3B8" opacity="0.55" />
-        <path d="M16 27H45" stroke="#475569" strokeLinecap="round" strokeWidth="2.4" />
-        <path d="M24 18.8L29 15H42.5" stroke="#F8FAFC" strokeLinecap="round" strokeWidth="1.8" />
-        <path d="M12 31H59" stroke="#FFFFFF" strokeOpacity="0.2" strokeLinecap="round" strokeWidth="1.8" />
+        <path
+          d="M10 31.8L17.8 21.2C18.9 19.7 20.6 18.8 22.5 18.8H39.4C41.1 18.8 42.7 19.5 43.9 20.6L49.9 26.1L55.2 27.4C58.5 28.2 60.8 31.2 60.8 34.6V41.2H8.4V35.1C8.4 33.9 8.9 32.7 10 31.8Z"
+          fill="#D8DEE7"
+          stroke="#F8FAFC"
+          strokeLinejoin="round"
+          strokeWidth="1.9"
+        />
+        <path d="M18.3 21.4H38.8C40.4 21.4 41.8 22 43 23.2L46.8 26.8H15.4L18.3 21.4Z" fill="#94A3B8" opacity="0.52" />
+        <path d="M15.5 27H46.6" stroke="#64748B" strokeLinecap="round" strokeWidth="2.1" />
+        <path d="M23.6 18.4L28.8 14.6H40.9" stroke="#F8FAFC" strokeLinecap="round" strokeWidth="1.6" />
+        <path d="M12.3 32.1H56.7" opacity="0.22" stroke="#FFFFFF" strokeLinecap="round" strokeWidth="1.6" />
+        <path d="M32.1 22.6V27" stroke="#475569" strokeLinecap="round" strokeWidth="1.4" />
       </svg>
     );
   }
@@ -487,10 +518,11 @@ function TransportIcon({ mode }: { mode: TransportMode }) {
 }
 
 function getTransportScale(zoom: number) {
-  const minScale = 0.34;
+  const minScale = 0.18;
   const maxScale = 1;
-  const normalized = (zoom - 1.4) / 7.2;
-  return Math.max(minScale, Math.min(maxScale, normalized * (maxScale - minScale) + minScale));
+  const normalized = Math.max(0, Math.min(1, (zoom - 2.2) / 6.2));
+  const eased = normalized ** 1.35;
+  return Math.max(minScale, Math.min(maxScale, eased * (maxScale - minScale) + minScale));
 }
 
 function getMapPadding(
