@@ -6,6 +6,7 @@ import { LoaderCircle, Plus, Search, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { buildFishIllustrationDataUrl } from "@/lib/fish-illustrations";
 import { useLanguage } from "@/lib/i18n";
 import type { WaterType } from "@/lib/types";
 
@@ -33,7 +34,6 @@ export function FishSpeciesSelector({
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<FishSpeciesSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [imageLookup, setImageLookup] = useState<Record<string, string | null>>({});
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -81,50 +81,6 @@ export function FishSpeciesSelector({
       window.clearTimeout(timeoutId);
     };
   }, [query, waterType]);
-
-  useEffect(() => {
-    const missing = value.filter((item) => imageLookup[item] === undefined);
-
-    if (!missing.length) {
-      return;
-    }
-
-    let cancelled = false;
-
-    void Promise.all(
-      missing.map(async (name) => {
-        try {
-          const response = await fetch(`/api/fish-species-search?q=${encodeURIComponent(name)}`);
-          const payload = await response.json();
-          const exact = ((payload.results ?? []) as FishSpeciesSuggestion[]).find(
-            (entry) => entry.name.toLowerCase() === name.toLowerCase()
-          );
-
-          return [name, exact?.imageUrl || null] as const;
-        } catch {
-          return [name, null] as const;
-        }
-      })
-    ).then((pairs) => {
-      if (cancelled) {
-        return;
-      }
-
-      setImageLookup((current) => {
-        const next = { ...current };
-
-        for (const [name, imageUrl] of pairs) {
-          next[name] = imageUrl;
-        }
-
-        return next;
-      });
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [imageLookup, value]);
 
   function addSpecies(name: string) {
     const trimmed = name.trim();
@@ -174,19 +130,13 @@ export function FishSpeciesSelector({
               <button
                 className="flex w-full items-center gap-3 border-b border-white/6 px-4 py-3 text-left transition last:border-b-0 hover:bg-[#102014]"
                 key={result.id}
-                onClick={() => {
-                  setImageLookup((current) => ({
-                    ...current,
-                    [result.name]: result.imageUrl
-                  }));
-                  addSpecies(result.name);
-                }}
+                onClick={() => addSpecies(result.name)}
                 type="button"
               >
                 <img
                   alt={result.name}
                   className="h-12 w-12 shrink-0 rounded-2xl border border-white/8 bg-[#08130d] object-cover"
-                  src={result.imageUrl || "/fish-placeholder.svg"}
+                  src={result.imageUrl || buildFishIllustrationDataUrl(result.name)}
                 />
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-medium text-white">{result.name}</span>
@@ -230,7 +180,7 @@ export function FishSpeciesSelector({
                 <img
                   alt={item}
                   className="h-12 w-12 shrink-0 rounded-2xl border border-white/8 bg-[#08130d] object-cover"
-                  src={imageLookup[item] || "/fish-placeholder.svg"}
+                  src={buildFishIllustrationDataUrl(item)}
                 />
               <span className="min-w-0 flex-1 text-sm font-medium text-white">{item}</span>
               <Button onClick={() => removeSpecies(item)} type="button" variant="ghost">

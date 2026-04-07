@@ -16,6 +16,7 @@ import {
 
 import { DestinationCard } from "@/components/destination/destination-card";
 import { DestinationForm } from "@/components/destination/destination-form";
+import { FishSpeciesList } from "@/components/destination/fish-species-list";
 import { PhotoGallery } from "@/components/destination/photo-gallery";
 import { TimelineSidebar } from "@/components/destination/timeline-sidebar";
 import { TransportForm } from "@/components/destination/transport-form";
@@ -331,10 +332,8 @@ export function DestinationPanel({
                       <Waves className="size-4 text-lagoon-300" />
                       <p className="eyebrow">{t("overview.targetSpecies")}</p>
                     </div>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {selectedDestination.species.map((item) => (
-                        <Badge key={item}>{item}</Badge>
-                      ))}
+                    <div className="mt-4">
+                      <FishSpeciesList species={selectedDestination.species} />
                     </div>
                   </div>
                 ) : null}

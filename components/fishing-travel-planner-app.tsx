@@ -6,6 +6,7 @@ import seedDestinations from "@/data/destinations.json";
 import { DestinationPanel } from "@/components/destination/destination-panel";
 import { MapToolbar } from "@/components/map/map-toolbar";
 import { WorldMap } from "@/components/map/world-map";
+import { loadStoredDestinations, saveStoredDestinations } from "@/lib/client-storage";
 import { LANGUAGE_STORAGE_KEY, LanguageProvider, type Language } from "@/lib/i18n";
 import {
   STATUS_ORDER,
@@ -55,25 +56,63 @@ export function FishingTravelPlannerApp() {
   }
 
   useEffect(() => {
-    const stored = parseStoredDestinations(window.localStorage.getItem(STORAGE_KEY))
-      ?? parseStoredDestinations(window.localStorage.getItem("fishing-travel-planner.destinations.v5"));
-    const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    let cancelled = false;
 
-    if (stored?.length) {
-      setDestinations(stored);
-    }
+    void (async () => {
+      try {
+        const indexedDbStored = await loadStoredDestinations();
+        const legacyStored =
+          parseStoredDestinations(window.localStorage.getItem(STORAGE_KEY))
+          ?? parseStoredDestinations(window.localStorage.getItem("fishing-travel-planner.destinations.v5"));
+        const stored = indexedDbStored?.length ? indexedDbStored : legacyStored;
+        const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
 
-    if (storedLanguage === "en" || storedLanguage === "zh") {
-      setLanguage(storedLanguage);
-    }
+        if (!cancelled && stored?.length) {
+          setDestinations(stored);
+        }
 
-    if (window.innerWidth < 1024) {
-      setTimelineCollapsed(true);
-      setDetailsCollapsed(true);
-      setSearchCollapsed(true);
-    }
+        if (!cancelled && (storedLanguage === "en" || storedLanguage === "zh")) {
+          setLanguage(storedLanguage as Language);
+        }
 
-    setIsLoaded(true);
+        if (!cancelled && window.innerWidth < 1024) {
+          setTimelineCollapsed(true);
+          setDetailsCollapsed(true);
+          setSearchCollapsed(true);
+        }
+
+        if (stored?.length) {
+          await saveStoredDestinations(stored);
+        }
+      } catch {
+        const fallbackStored =
+          parseStoredDestinations(window.localStorage.getItem(STORAGE_KEY))
+          ?? parseStoredDestinations(window.localStorage.getItem("fishing-travel-planner.destinations.v5"));
+        const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+
+        if (!cancelled && fallbackStored?.length) {
+          setDestinations(fallbackStored);
+        }
+
+        if (!cancelled && (storedLanguage === "en" || storedLanguage === "zh")) {
+          setLanguage(storedLanguage as Language);
+        }
+
+        if (!cancelled && window.innerWidth < 1024) {
+          setTimelineCollapsed(true);
+          setDetailsCollapsed(true);
+          setSearchCollapsed(true);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoaded(true);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -81,7 +120,13 @@ export function FishingTravelPlannerApp() {
       return;
     }
 
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(destinations));
+    void saveStoredDestinations(destinations);
+
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(destinations));
+    } catch {
+      return;
+    }
   }, [destinations, isLoaded]);
 
   useEffect(() => {
