@@ -6,13 +6,11 @@ import { LoaderCircle, Plus, Search, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { buildFishIllustrationDataUrl } from "@/lib/fish-illustrations";
 import { useLanguage } from "@/lib/i18n";
 import type { WaterType } from "@/lib/types";
 
 type FishSpeciesSuggestion = {
   id: string;
-  imageUrl: string | null;
   name: string;
   wikiTitle: string;
 };
@@ -133,11 +131,6 @@ export function FishSpeciesSelector({
                 onClick={() => addSpecies(result.name)}
                 type="button"
               >
-                <img
-                  alt={result.name}
-                  className="h-12 w-12 shrink-0 rounded-2xl border border-white/8 bg-[#08130d] object-cover"
-                  src={result.imageUrl || buildFishIllustrationDataUrl(result.name)}
-                />
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-medium text-white">{result.name}</span>
                   <span className="mt-1 block truncate text-xs uppercase tracking-[0.16em] text-white/38">
@@ -174,14 +167,9 @@ export function FishSpeciesSelector({
         {value.length ? (
           value.map((item) => (
             <div
-              className="flex items-center gap-3 rounded-[22px] border border-white/8 bg-[#08130d] px-3 py-3"
+              className="flex items-center gap-3 rounded-[22px] border border-white/8 bg-[#08130d] px-4 py-3"
               key={item}
             >
-                <img
-                  alt={item}
-                  className="h-12 w-12 shrink-0 rounded-2xl border border-white/8 bg-[#08130d] object-cover"
-                  src={buildFishIllustrationDataUrl(item)}
-                />
               <span className="min-w-0 flex-1 text-sm font-medium text-white">{item}</span>
               <Button onClick={() => removeSpecies(item)} type="button" variant="ghost">
                 <Trash2 className="size-4" />

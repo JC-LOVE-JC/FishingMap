@@ -83,7 +83,12 @@ export function WorldMap({
   const mapRef = useRef<MapRef | null>(null);
   const previousFocus = useRef<string>("");
   const [hoveredTransportDestinationId, setHoveredTransportDestinationId] = useState<string | null>(null);
+  const [mapZoom, setMapZoom] = useState(INITIAL_VIEW_STATE.zoom);
   const { language, t } = useLanguage();
+
+  function syncMapZoom(nextZoom: number) {
+    setMapZoom(Number(nextZoom.toFixed(3)));
+  }
 
   useEffect(() => {
     if (!focusTarget || !mapRef.current) {
@@ -184,6 +189,8 @@ export function WorldMap({
   );
   const hoveredTransport =
     transportMarkers.find((item) => item.destinationId === hoveredTransportDestinationId) ?? null;
+  const transportScale = getTransportScale(mapZoom);
+  const showTransportMarkers = transportScale > 0;
 
   return (
     <div className="absolute inset-0">
@@ -201,8 +208,21 @@ export function WorldMap({
         renderWorldCopies={false}
         sky={MAP_SKY}
         style={{ height: "100%", width: "100%" }}
+        onMove={(event) => {
+          syncMapZoom(event.viewState.zoom);
+        }}
+        onMoveEnd={(event) => {
+          syncMapZoom(event.viewState.zoom);
+        }}
+        onZoom={(event) => {
+          syncMapZoom(event.viewState.zoom);
+        }}
+        onZoomEnd={(event) => {
+          syncMapZoom(event.viewState.zoom);
+        }}
         onLoad={() => {
           mapRef.current?.getMap().setProjection({ type: "globe" });
+          syncMapZoom(mapRef.current?.getZoom() ?? INITIAL_VIEW_STATE.zoom);
         }}
         onClick={(event) => {
           if (!addMode) {
@@ -262,7 +282,7 @@ export function WorldMap({
           </Source>
         ) : null}
 
-        {transportMarkers.map((marker) => {
+        {showTransportMarkers && transportMarkers.map((marker) => {
           const routeMeta = TRANSPORT_ROUTE_META[marker.mode];
 
           return (
@@ -274,7 +294,7 @@ export function WorldMap({
             >
               <div
                 className={`pointer-events-none flex size-8 items-center justify-center rounded-full border shadow-[0_10px_20px_rgba(0,0,0,0.28)] ${routeMeta.arrowClassName}`}
-                style={{ transform: `rotate(${marker.arrowBearing}deg)` }}
+                style={{ transform: `rotate(${marker.arrowBearing}deg) scale(${Math.max(0.45, transportScale * 0.78)})` }}
               >
                 <Navigation className="size-4" />
               </div>
@@ -282,7 +302,7 @@ export function WorldMap({
           );
         })}
 
-        {transportMarkers.map((marker) => {
+        {showTransportMarkers && transportMarkers.map((marker) => {
           const routeMeta = TRANSPORT_ROUTE_META[marker.mode];
 
           return (
@@ -300,6 +320,7 @@ export function WorldMap({
                 }}
                 onMouseEnter={() => setHoveredTransportDestinationId(marker.destinationId)}
                 onMouseLeave={() => setHoveredTransportDestinationId((current) => (current === marker.destinationId ? null : current))}
+                style={{ transform: `scale(${transportScale})`, transformOrigin: "center center" }}
                 type="button"
               >
                 <span className="pointer-events-none absolute inset-[2px] rounded-[1.4rem] border border-white/12 opacity-55" />
@@ -312,7 +333,7 @@ export function WorldMap({
           );
         })}
 
-        {hoveredTransport ? (
+        {showTransportMarkers && hoveredTransport ? (
           <Popup
             anchor="top"
             className="[&_.maplibregl-popup-content]:rounded-[18px] [&_.maplibregl-popup-content]:border [&_.maplibregl-popup-content]:border-white/10 [&_.maplibregl-popup-content]:bg-[#061521]/95 [&_.maplibregl-popup-content]:p-0 [&_.maplibregl-popup-content]:shadow-panel [&_.maplibregl-popup-tip]:border-t-[#061521]/95"
@@ -432,6 +453,19 @@ export function WorldMap({
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#020712]/68 via-[#020712]/18 to-transparent" />
     </div>
   );
+}
+
+function getTransportScale(zoom: number) {
+  if (zoom < 3.6) {
+    return 0;
+  }
+
+  const minScale = 0.28;
+  const maxScale = 1;
+  const normalized = Math.max(0, Math.min(1, (zoom - 3.6) / 4.8));
+  const eased = normalized ** 1.45;
+
+  return Math.max(minScale, Math.min(maxScale, eased * (maxScale - minScale) + minScale));
 }
 
 function TransportIcon({ mode }: { mode: TransportMode }) {

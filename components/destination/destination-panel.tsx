@@ -142,13 +142,13 @@ export function DestinationPanel({
 
       <div
         className={cn(
-          "safe-x safe-bottom pointer-events-none absolute inset-x-3 bottom-3 z-20 flex flex-col transition-transform duration-300 lg:inset-y-[8.75rem] lg:left-auto lg:right-6 lg:bottom-6 lg:flex-row",
+          "safe-x safe-bottom pointer-events-none absolute inset-x-3 bottom-3 z-20 flex flex-col transition-transform duration-300 lg:bottom-6 lg:left-auto lg:right-6 lg:top-[8.75rem] lg:flex-row lg:items-start",
           detailsCollapsed
             ? "translate-y-[calc(100%-3.5rem)] lg:translate-y-0 lg:translate-x-[calc(100%-3.25rem)]"
             : "translate-x-0 translate-y-0"
         )}
       >
-        <div className="pointer-events-auto order-2 mt-2 flex justify-center lg:order-1 lg:mt-0 lg:items-start lg:pt-4">
+        <div className="pointer-events-auto order-2 mt-2 flex justify-center lg:order-1 lg:mt-0 lg:items-start lg:pt-0">
           <button
             className="flex h-12 w-full max-w-[11rem] items-center justify-center gap-2 rounded-full border border-white/8 bg-[#03101a]/98 px-4 text-white/72 shadow-[0_24px_60px_rgba(0,0,0,0.42)] backdrop-blur-2xl transition hover:text-white lg:min-h-24 lg:w-12 lg:max-w-none lg:flex-col lg:rounded-l-[22px] lg:rounded-r-none lg:border-r-0 lg:px-2"
             onClick={() => setDetailsCollapsed(!detailsCollapsed)}
@@ -171,7 +171,7 @@ export function DestinationPanel({
           </button>
         </div>
 
-        <div className="order-1 w-full lg:order-2 lg:w-[30rem]">
+        <div className="order-1 w-full lg:order-2 lg:h-full lg:w-[30rem]">
         <div className={cn(
           "pointer-events-auto relative flex max-h-[68vh] min-h-[14rem] flex-col overflow-hidden rounded-[30px] border border-white/8 bg-[#030d17]/96 shadow-[0_30px_90px_rgba(0,0,0,0.48)] backdrop-blur-2xl lg:h-full lg:max-h-none lg:min-h-0",
           activeTheme.panelClassName
@@ -315,8 +315,6 @@ export function DestinationPanel({
                   </div>
                 </div>
 
-                <WeatherForecastCard destination={selectedDestination} />
-
                 {selectedDestination.notes ? (
                   <div className="panel-section rounded-[28px] p-5">
                     <p className="eyebrow">{t("overview.notes")}</p>
@@ -457,6 +455,8 @@ export function DestinationPanel({
                     </p>
                   </div>
                 ) : null}
+
+                <WeatherForecastCard destination={selectedDestination} />
                 </div>
               </motion.div>
             ) : null}
