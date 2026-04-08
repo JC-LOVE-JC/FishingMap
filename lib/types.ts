@@ -19,6 +19,26 @@ export type TransportSegment = {
   notes?: string;
 };
 
+export type GuideInfo = {
+  name?: string;
+  contact?: string;
+};
+
+export type BoatInfo = {
+  boatName?: string;
+  length?: string;
+  boatType?: string;
+  maxAnglers?: number;
+  engineSetup?: string;
+  fightingChair?: boolean;
+  liveBaitTank?: boolean;
+  outriggers?: boolean;
+  birdRadar?: boolean;
+  tunaTubes?: boolean;
+  hasCabin?: boolean;
+  hasToilet?: boolean;
+};
+
 export type Destination = {
   id: string;
   title: string;
@@ -42,6 +62,8 @@ export type Destination = {
   species: string[];
   techniques: string[];
   tags: string[];
+  guideInfo?: GuideInfo;
+  boatInfo?: BoatInfo;
   photos: PhotoItem[];
   rating?: number;
   featured?: boolean;

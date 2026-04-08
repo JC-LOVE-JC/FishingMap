@@ -44,6 +44,26 @@ type TranslationKey =
   | "overview.targetSpecies"
   | "overview.techniques"
   | "overview.tags"
+  | "overview.guideBoatInformation"
+  | "overview.guide"
+  | "overview.guideName"
+  | "overview.contact"
+  | "overview.boatInformation"
+  | "overview.boatName"
+  | "overview.length"
+  | "overview.typeOfBoat"
+  | "overview.maxAnglers"
+  | "overview.engineSetup"
+  | "overview.fightingChair"
+  | "overview.liveBaitTank"
+  | "overview.outriggers"
+  | "overview.birdRadar"
+  | "overview.tunaTubes"
+  | "overview.cabin"
+  | "overview.toilet"
+  | "overview.notProvided"
+  | "overview.yes"
+  | "overview.no"
   | "overview.expeditionRoute"
   | "overview.addStop"
   | "overview.deleteTrip"
@@ -210,6 +230,26 @@ const translations: Record<Language, TranslationDictionary> = {
     "overview.targetSpecies": "Target Species",
     "overview.techniques": "Techniques",
     "overview.tags": "Tags",
+    "overview.guideBoatInformation": "Guide & Boat Information",
+    "overview.guide": "Guide",
+    "overview.guideName": "Name",
+    "overview.contact": "Contact",
+    "overview.boatInformation": "Boat Information",
+    "overview.boatName": "Boat Name",
+    "overview.length": "Length",
+    "overview.typeOfBoat": "Type of Boat",
+    "overview.maxAnglers": "Max Number of Anglers",
+    "overview.engineSetup": "Engine Setup",
+    "overview.fightingChair": "Fighting Chair",
+    "overview.liveBaitTank": "Live Bait Tank",
+    "overview.outriggers": "Outriggers",
+    "overview.birdRadar": "Bird Radar",
+    "overview.tunaTubes": "Tuna Tubes",
+    "overview.cabin": "Cabin",
+    "overview.toilet": "Toilet",
+    "overview.notProvided": "Not provided",
+    "overview.yes": "Yes",
+    "overview.no": "No",
     "overview.expeditionRoute": "Expedition Route",
     "overview.addStop": "Add Stop",
     "overview.deleteTrip": "Delete Trip",
@@ -372,6 +412,26 @@ const translations: Record<Language, TranslationDictionary> = {
     "overview.targetSpecies": "目标鱼种",
     "overview.techniques": "钓法",
     "overview.tags": "标签",
+    "overview.guideBoatInformation": "向导与船只信息",
+    "overview.guide": "向导",
+    "overview.guideName": "姓名",
+    "overview.contact": "联系方式",
+    "overview.boatInformation": "船只信息",
+    "overview.boatName": "船名",
+    "overview.length": "长度",
+    "overview.typeOfBoat": "船型",
+    "overview.maxAnglers": "最多钓手数",
+    "overview.engineSetup": "引擎配置",
+    "overview.fightingChair": "搏鱼椅",
+    "overview.liveBaitTank": "活饵舱",
+    "overview.outriggers": "侧伸杆",
+    "overview.birdRadar": "鸟雷达",
+    "overview.tunaTubes": "金枪鱼管",
+    "overview.cabin": "舱室",
+    "overview.toilet": "厕所",
+    "overview.notProvided": "未填写",
+    "overview.yes": "有",
+    "overview.no": "无",
     "overview.expeditionRoute": "行程路线",
     "overview.addStop": "新增站点",
     "overview.deleteTrip": "删除行程",
