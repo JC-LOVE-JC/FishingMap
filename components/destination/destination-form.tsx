@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 
-import { ImagePlus, LoaderCircle, MapPinned, Plus, Search, Trash2, UploadCloud } from "lucide-react";
+import { ChevronDown, ImagePlus, LoaderCircle, MapPinned, Plus, Search, Trash2, UploadCloud } from "lucide-react";
 
 import { FishSpeciesSelector } from "@/components/destination/fish-species-selector";
 import { TechniqueSelector } from "@/components/destination/technique-selector";
@@ -12,8 +12,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getStatusLabel, getWaterTypeLabel, useLanguage } from "@/lib/i18n";
 import type {
+  BoatInfo,
   Destination,
   DestinationStatus,
+  GuideInfo,
   LocationSuggestion,
   PhotoItem,
   WaterType
@@ -134,6 +136,40 @@ export function DestinationForm({
           : photo
       )
     );
+  }
+
+  function updateGuideField<Key extends keyof GuideInfo>(key: Key, nextValue: GuideInfo[Key]) {
+    onChange({
+      ...value,
+      guideInfo: {
+        name: "",
+        contact: "",
+        ...value.guideInfo,
+        [key]: nextValue
+      }
+    });
+  }
+
+  function updateBoatField<Key extends keyof BoatInfo>(key: Key, nextValue: BoatInfo[Key]) {
+    onChange({
+      ...value,
+      boatInfo: {
+        boatName: "",
+        length: "",
+        boatType: "",
+        maxAnglers: undefined,
+        engineSetup: "",
+        fightingChair: undefined,
+        liveBaitTank: undefined,
+        outriggers: undefined,
+        birdRadar: undefined,
+        tunaTubes: undefined,
+        hasCabin: undefined,
+        hasToilet: undefined,
+        ...value.boatInfo,
+        [key]: nextValue
+      }
+    });
   }
 
   function addPhotoRow() {
@@ -606,6 +642,136 @@ export function DestinationForm({
         </div>
       </section>
 
+      <details className="panel-section group overflow-hidden rounded-[28px]">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 marker:hidden">
+          <p className="eyebrow">{t("overview.guideBoatInformation")}</p>
+          <span className="rounded-full border border-white/10 bg-white/5 p-2 text-white/55 transition group-open:rotate-180">
+            <ChevronDown className="size-4" />
+          </span>
+        </summary>
+
+        <div className="grid gap-4 border-t border-white/8 px-4 pb-4 pt-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <label className="eyebrow" htmlFor="guideName">
+              {t("overview.guideName")}
+            </label>
+            <Input
+              id="guideName"
+              onChange={(event) => updateGuideField("name", event.target.value)}
+              value={value.guideInfo?.name || ""}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="eyebrow" htmlFor="guideContact">
+              {t("overview.contact")}
+            </label>
+            <Input
+              id="guideContact"
+              onChange={(event) => updateGuideField("contact", event.target.value)}
+              value={value.guideInfo?.contact || ""}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="eyebrow" htmlFor="boatName">
+              {t("overview.boatName")}
+            </label>
+            <Input
+              id="boatName"
+              onChange={(event) => updateBoatField("boatName", event.target.value)}
+              value={value.boatInfo?.boatName || ""}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="eyebrow" htmlFor="boatLength">
+              {t("overview.length")}
+            </label>
+            <Input
+              id="boatLength"
+              onChange={(event) => updateBoatField("length", event.target.value)}
+              value={value.boatInfo?.length || ""}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="eyebrow" htmlFor="boatType">
+              {t("overview.typeOfBoat")}
+            </label>
+            <Input
+              id="boatType"
+              onChange={(event) => updateBoatField("boatType", event.target.value)}
+              value={value.boatInfo?.boatType || ""}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="eyebrow" htmlFor="maxAnglers">
+              {t("overview.maxAnglers")}
+            </label>
+            <Input
+              id="maxAnglers"
+              min={1}
+              onChange={(event) =>
+                updateBoatField("maxAnglers", event.target.value ? Number(event.target.value) : undefined)
+              }
+              type="number"
+              value={value.boatInfo?.maxAnglers ?? ""}
+            />
+          </div>
+
+          <div className="space-y-2 md:col-span-2">
+            <label className="eyebrow" htmlFor="engineSetup">
+              {t("overview.engineSetup")}
+            </label>
+            <Input
+              id="engineSetup"
+              onChange={(event) => updateBoatField("engineSetup", event.target.value)}
+              value={value.boatInfo?.engineSetup || ""}
+            />
+          </div>
+
+          <div className="grid gap-3 rounded-[22px] border border-white/8 bg-white/4 p-4 md:col-span-2 md:grid-cols-2">
+            <BoatCheckbox
+              checked={value.boatInfo?.fightingChair}
+              label={t("overview.fightingChair")}
+              onChange={(nextValue) => updateBoatField("fightingChair", nextValue)}
+            />
+            <BoatCheckbox
+              checked={value.boatInfo?.liveBaitTank}
+              label={t("overview.liveBaitTank")}
+              onChange={(nextValue) => updateBoatField("liveBaitTank", nextValue)}
+            />
+            <BoatCheckbox
+              checked={value.boatInfo?.outriggers}
+              label={t("overview.outriggers")}
+              onChange={(nextValue) => updateBoatField("outriggers", nextValue)}
+            />
+            <BoatCheckbox
+              checked={value.boatInfo?.birdRadar}
+              label={t("overview.birdRadar")}
+              onChange={(nextValue) => updateBoatField("birdRadar", nextValue)}
+            />
+            <BoatCheckbox
+              checked={value.boatInfo?.tunaTubes}
+              label={t("overview.tunaTubes")}
+              onChange={(nextValue) => updateBoatField("tunaTubes", nextValue)}
+            />
+            <BoatCheckbox
+              checked={value.boatInfo?.hasCabin}
+              label={t("overview.cabin")}
+              onChange={(nextValue) => updateBoatField("hasCabin", nextValue)}
+            />
+            <BoatCheckbox
+              checked={value.boatInfo?.hasToilet}
+              label={t("overview.toilet")}
+              onChange={(nextValue) => updateBoatField("hasToilet", nextValue)}
+            />
+          </div>
+        </div>
+      </details>
+
       <section className="panel-section space-y-4 rounded-[28px] p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -698,4 +864,26 @@ export function DestinationForm({
 
 function buildLocationQuery(value: Destination) {
   return [value.city, value.region, value.country].filter(Boolean).join(", ");
+}
+
+function BoatCheckbox({
+  checked,
+  label,
+  onChange
+}: {
+  checked?: boolean;
+  label: string;
+  onChange: (nextValue: boolean) => void;
+}) {
+  return (
+    <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#06121c] px-4 py-3 text-sm text-white/72">
+      <input
+        checked={Boolean(checked)}
+        className="size-4 rounded border-white/20 bg-transparent"
+        onChange={(event) => onChange(event.target.checked)}
+        type="checkbox"
+      />
+      {label}
+    </label>
+  );
 }

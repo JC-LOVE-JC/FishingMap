@@ -1,6 +1,8 @@
 import type {
+  BoatInfo,
   Destination,
   DestinationStatus,
+  GuideInfo,
   PhotoItem,
   TimelineExpedition,
   TransportMode,
@@ -252,6 +254,24 @@ export function createEmptyDestination(lat = 6, lng = 12): Destination {
     species: [],
     techniques: [],
     tags: [],
+    guideInfo: {
+      name: "",
+      contact: ""
+    },
+    boatInfo: {
+      boatName: "",
+      length: "",
+      boatType: "",
+      maxAnglers: undefined,
+      engineSetup: "",
+      fightingChair: undefined,
+      liveBaitTank: undefined,
+      outriggers: undefined,
+      birdRadar: undefined,
+      tunaTubes: undefined,
+      hasCabin: undefined,
+      hasToilet: undefined
+    },
     photos: [],
     rating: 4,
     featured: false,
@@ -290,9 +310,35 @@ export function normalizeDestination(destination: Destination): Destination {
     species: destination.species ?? [],
     techniques: destination.techniques ?? [],
     tags: destination.tags ?? [],
+    guideInfo: normalizeGuideInfo(destination.guideInfo),
+    boatInfo: normalizeBoatInfo(destination.boatInfo),
     photos: (destination.photos ?? []).filter((photo) => photo.url.trim().length > 0),
     rating: destination.rating ?? 4,
     featured: Boolean(destination.featured)
+  };
+}
+
+function normalizeGuideInfo(guideInfo?: GuideInfo): GuideInfo {
+  return {
+    name: guideInfo?.name ?? "",
+    contact: guideInfo?.contact ?? ""
+  };
+}
+
+function normalizeBoatInfo(boatInfo?: BoatInfo): BoatInfo {
+  return {
+    boatName: boatInfo?.boatName ?? "",
+    length: boatInfo?.length ?? "",
+    boatType: boatInfo?.boatType ?? "",
+    maxAnglers: boatInfo?.maxAnglers,
+    engineSetup: boatInfo?.engineSetup ?? "",
+    fightingChair: boatInfo?.fightingChair,
+    liveBaitTank: boatInfo?.liveBaitTank,
+    outriggers: boatInfo?.outriggers,
+    birdRadar: boatInfo?.birdRadar,
+    tunaTubes: boatInfo?.tunaTubes,
+    hasCabin: boatInfo?.hasCabin,
+    hasToilet: boatInfo?.hasToilet
   };
 }
 

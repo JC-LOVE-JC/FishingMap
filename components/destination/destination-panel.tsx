@@ -467,11 +467,11 @@ export function DestinationPanel({
                       <div className="grid gap-3 sm:grid-cols-2">
                         <SpecRow
                           label={t("overview.guideName")}
-                          value={selectedDestination.guideInfo?.name || t("overview.notProvided")}
+                          value={selectedDestination.guideInfo?.name || ""}
                         />
                         <SpecRow
                           label={t("overview.contact")}
-                          value={selectedDestination.guideInfo?.contact || t("overview.notProvided")}
+                          value={selectedDestination.guideInfo?.contact || ""}
                         />
                       </div>
                     </div>
@@ -481,70 +481,70 @@ export function DestinationPanel({
                       <div className="grid gap-3 sm:grid-cols-2">
                         <SpecRow
                           label={t("overview.boatName")}
-                          value={selectedDestination.boatInfo?.boatName || t("overview.notProvided")}
+                          value={selectedDestination.boatInfo?.boatName || ""}
                         />
                         <SpecRow
                           label={t("overview.length")}
-                          value={selectedDestination.boatInfo?.length || t("overview.notProvided")}
+                          value={selectedDestination.boatInfo?.length || ""}
                         />
                         <SpecRow
                           label={t("overview.typeOfBoat")}
-                          value={selectedDestination.boatInfo?.boatType || t("overview.notProvided")}
+                          value={selectedDestination.boatInfo?.boatType || ""}
                         />
                         <SpecRow
                           label={t("overview.maxAnglers")}
                           value={
                             selectedDestination.boatInfo?.maxAnglers
                               ? String(selectedDestination.boatInfo.maxAnglers)
-                              : t("overview.notProvided")
+                              : ""
                           }
                         />
                         <div className="sm:col-span-2">
                           <SpecRow
                             label={t("overview.engineSetup")}
-                            value={selectedDestination.boatInfo?.engineSetup || t("overview.notProvided")}
+                            value={selectedDestination.boatInfo?.engineSetup || ""}
                           />
                         </div>
                         <BooleanSpec
                           falseLabel={t("overview.no")}
                           label={t("overview.fightingChair")}
-                          value={Boolean(selectedDestination.boatInfo?.fightingChair)}
+                          value={selectedDestination.boatInfo?.fightingChair}
                           trueLabel={t("overview.yes")}
                         />
                         <BooleanSpec
                           falseLabel={t("overview.no")}
                           label={t("overview.liveBaitTank")}
-                          value={Boolean(selectedDestination.boatInfo?.liveBaitTank)}
+                          value={selectedDestination.boatInfo?.liveBaitTank}
                           trueLabel={t("overview.yes")}
                         />
                         <BooleanSpec
                           falseLabel={t("overview.no")}
                           label={t("overview.outriggers")}
-                          value={Boolean(selectedDestination.boatInfo?.outriggers)}
+                          value={selectedDestination.boatInfo?.outriggers}
                           trueLabel={t("overview.yes")}
                         />
                         <BooleanSpec
                           falseLabel={t("overview.no")}
                           label={t("overview.birdRadar")}
-                          value={Boolean(selectedDestination.boatInfo?.birdRadar)}
+                          value={selectedDestination.boatInfo?.birdRadar}
                           trueLabel={t("overview.yes")}
                         />
                         <BooleanSpec
                           falseLabel={t("overview.no")}
                           label={t("overview.tunaTubes")}
-                          value={Boolean(selectedDestination.boatInfo?.tunaTubes)}
+                          value={selectedDestination.boatInfo?.tunaTubes}
                           trueLabel={t("overview.yes")}
                         />
                         <BooleanSpec
                           falseLabel={t("overview.no")}
                           label={t("overview.cabin")}
-                          value={Boolean(selectedDestination.boatInfo?.hasCabin)}
+                          value={selectedDestination.boatInfo?.hasCabin}
                           trueLabel={t("overview.yes")}
                         />
                         <BooleanSpec
                           falseLabel={t("overview.no")}
                           label={t("overview.toilet")}
-                          value={Boolean(selectedDestination.boatInfo?.hasToilet)}
+                          value={selectedDestination.boatInfo?.hasToilet}
                           trueLabel={t("overview.yes")}
                         />
                       </div>
@@ -772,9 +772,7 @@ function BooleanSpec({
   falseLabel: string;
   label: string;
   trueLabel: string;
-  value: boolean;
+  value?: boolean;
 }) {
-  return (
-    <SpecRow label={label} value={value ? trueLabel : falseLabel} />
-  );
+  return <SpecRow label={label} value={typeof value === "boolean" ? (value ? trueLabel : falseLabel) : ""} />;
 }
