@@ -75,9 +75,11 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
   const [tripMaps, setTripMaps] = useState<TripMap[]>([]);
   const [activeTripMapId, setActiveTripMapId] = useState<string | null>(null);
   const [viewerError, setViewerError] = useState<string | null>(null);
+  const [autoFocusExpeditionId, setAutoFocusExpeditionId] = useState<string | null>(null);
   const deferredSearch = useDeferredValue(searchQuery);
   const [isPending, startTransition] = useTransition();
   const skipRemoteSyncRef = useRef(false);
+  const autoFocusAppliedScopeRef = useRef<string | null>(null);
 
   function isMobileViewport() {
     return typeof window !== "undefined" && window.innerWidth < 1024;
@@ -90,6 +92,16 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
     supabaseEnabled &&
     !sharedSlug &&
     ((authDialogOpen || (!authUser && !guestMode)));
+
+  useEffect(() => {
+    if (typeof window === "undefined" || window.innerWidth >= 1024) {
+      return;
+    }
+
+    setTimelineCollapsed(true);
+    setDetailsCollapsed(true);
+    setSearchCollapsed(true);
+  }, []);
 
   useEffect(() => {
     if (!supabase) {
@@ -383,7 +395,6 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
       : selectedDestination
         ? "details"
         : "overview";
-  const focusTarget = formMode === "add" && draftDestination ? draftDestination : selectedDestination;
   const timelineSections = buildTimelineSections(destinations);
   const selectedExpeditionId =
     transportTarget?.expeditionId ||
@@ -394,6 +405,10 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
     timelineSections
       .flatMap((section) => section.items)
       .find((item) => item.id === selectedExpeditionId) ?? null;
+  const autoFocusExpedition =
+    timelineSections
+      .flatMap((section) => section.items)
+      .find((item) => item.id === autoFocusExpeditionId) ?? null;
   const expeditionSuggestions = [...new Set(
     destinations
       .map((destination) => destination.expeditionName?.trim())
@@ -401,6 +416,32 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
   )].sort((a, b) => a.localeCompare(b));
   const activeWaterTheme =
     WATER_TYPE_META[(draftDestination?.waterType || selectedDestination?.waterType || "saltwater")];
+  const autoFocusScopeKey = sharedSlug ?? activeTripMapId ?? (supabaseEnabled ? "supabase" : "local");
+  const focusTarget =
+    (formMode === "add" && draftDestination ? draftDestination : selectedDestination)
+    ?? autoFocusExpedition?.destinations[0]
+    ?? null;
+  const mapSelectedExpedition = selectedExpedition ?? autoFocusExpedition ?? null;
+
+  useEffect(() => {
+    if (!isLoaded) {
+      return;
+    }
+
+    if (autoFocusAppliedScopeRef.current === autoFocusScopeKey) {
+      return;
+    }
+
+    autoFocusAppliedScopeRef.current = autoFocusScopeKey;
+
+    if (destinations.length === 0) {
+      setAutoFocusExpeditionId(null);
+      return;
+    }
+
+    const expedition = getAutoFocusExpedition(timelineSections);
+    setAutoFocusExpeditionId(expedition?.id ?? null);
+  }, [autoFocusScopeKey, destinations.length, isLoaded, timelineSections]);
 
   async function handleSignIn(email: string, password: string) {
     if (!supabase) {
@@ -927,7 +968,7 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
           onSelectDestination={handleSelectDestination}
           rightPanelCollapsed={detailsCollapsed}
           searchPanelCollapsed={searchCollapsed}
-          selectedExpedition={selectedExpedition}
+          selectedExpedition={mapSelectedExpedition}
           selectedId={selectedId}
         />
 
@@ -1091,4 +1132,43 @@ async function reverseGeocodeLocation(coordinates: { lat: number; lng: number })
 
   const payload = await response.json();
   return (payload.result ?? null) as LocationSuggestion | null;
+}
+
+function getAutoFocusExpedition(sections: Array<{ items: Array<{ id: string; startDate?: string; endDate?: string; destinations: Destination[] }> }>) {
+  const expeditions = sections.flatMap((section) => section.items);
+
+  if (expeditions.length === 0) {
+    return null;
+  }
+
+  const now = new Date();
+  const current = expeditions.find((expedition) => isTripActive(expedition, now));
+
+  if (current) {
+    return current;
+  }
+
+  const next = expeditions
+    .filter((expedition) => getTripStartTime(expedition) >= now.getTime())
+    .sort((a, b) => getTripStartTime(a) - getTripStartTime(b))[0];
+
+  return next ?? expeditions[0] ?? null;
+}
+
+function isTripActive(
+  expedition: { startDate?: string; endDate?: string },
+  now: Date
+) {
+  const start = getTripStartTime(expedition);
+  const end = getTripEndTime(expedition);
+
+  return start <= now.getTime() && end >= now.getTime();
+}
+
+function getTripStartTime(expedition: { startDate?: string; endDate?: string }) {
+  return new Date(`${expedition.startDate || expedition.endDate || "2100-01-01"}T00:00:00`).getTime();
+}
+
+function getTripEndTime(expedition: { startDate?: string; endDate?: string }) {
+  return new Date(`${expedition.endDate || expedition.startDate || "2100-01-01"}T23:59:59`).getTime();
 }

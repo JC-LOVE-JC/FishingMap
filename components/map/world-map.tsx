@@ -589,23 +589,37 @@ function buildRouteSegments(selectedExpedition: TimelineExpedition) {
       to: destination
     };
   });
-  const groupedSegments = new globalThis.Map<string, number[]>();
+  const groupedSegments = new globalThis.Map<string, globalThis.Map<string, number[]>>();
 
   rawSegments.forEach((segment, index) => {
-    const key = getSegmentPairKey(segment.from, segment.to);
-    const bucket = groupedSegments.get(key) ?? [];
+    const pairKey = getSegmentPairKey(segment.from, segment.to);
+    const directedKey = getDirectedSegmentKey(segment.from, segment.to);
+    const pairBucket = groupedSegments.get(pairKey) ?? new globalThis.Map<string, number[]>();
+    const directionBucket = pairBucket.get(directedKey) ?? [];
 
-    bucket.push(index);
-    groupedSegments.set(key, bucket);
+    directionBucket.push(index);
+    pairBucket.set(directedKey, directionBucket);
+    groupedSegments.set(pairKey, pairBucket);
   });
 
   const offsetByIndex = new globalThis.Map<number, number>();
 
-  groupedSegments.forEach((indices) => {
-    const offsets = getOffsetSteps(indices.length);
+  groupedSegments.forEach((directionBuckets) => {
+    if (directionBuckets.size > 1) {
+      directionBuckets.forEach((indices) => {
+        indices.forEach((segmentIndex, offsetIndex) => {
+          offsetByIndex.set(segmentIndex, getRoundTripOffset(offsetIndex));
+        });
+      });
+      return;
+    }
 
-    indices.forEach((segmentIndex, offsetIndex) => {
-      offsetByIndex.set(segmentIndex, offsets[offsetIndex] ?? 0);
+    directionBuckets.forEach((indices) => {
+      const offsets = getOffsetSteps(indices.length);
+
+      indices.forEach((segmentIndex, offsetIndex) => {
+        offsetByIndex.set(segmentIndex, offsets[offsetIndex] ?? 0);
+      });
     });
   });
 
@@ -626,8 +640,16 @@ function getSegmentPairKey(from: Pick<Destination, "lat" | "lng">, to: Pick<Dest
   return [start, end].sort().join("|");
 }
 
+function getDirectedSegmentKey(from: Pick<Destination, "lat" | "lng">, to: Pick<Destination, "lat" | "lng">) {
+  return `${from.lng.toFixed(3)}:${from.lat.toFixed(3)}->${to.lng.toFixed(3)}:${to.lat.toFixed(3)}`;
+}
+
 function getOffsetSteps(count: number) {
   return Array.from({ length: count }, (_, index) => (index - (count - 1) / 2) * 2);
+}
+
+function getRoundTripOffset(offsetIndex: number) {
+  return 1 + offsetIndex * 2;
 }
 
 function buildCurvedSegment(
