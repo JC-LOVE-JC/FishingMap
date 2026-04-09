@@ -150,6 +150,10 @@ insert into storage.buckets (id, name, public)
 values ('destination-images', 'destination-images', true)
 on conflict (id) do nothing;
 
+update storage.buckets
+set public = true
+where id = 'destination-images';
+
 drop policy if exists "destination image upload by owner" on storage.objects;
 create policy "destination image upload by owner"
 on storage.objects
