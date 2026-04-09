@@ -90,7 +90,7 @@ export function MapToolbar({
             </div>
           </div>
 
-          <div className="flex flex-1 flex-col gap-3 md:max-w-3xl md:flex-row md:items-center md:justify-end">
+          <div className="flex flex-1 flex-col gap-3 md:max-w-3xl md:flex-row md:flex-wrap md:items-center md:justify-end">
             <div className="flex items-center justify-between gap-2 md:justify-start">
               <span className="text-[0.62rem] uppercase tracking-[0.22em] text-white/45">
                 {t("toolbar.language")}
@@ -119,10 +119,10 @@ export function MapToolbar({
               </div>
             </div>
 
-            <div className="relative min-w-0 flex-1 md:max-w-sm">
-              <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-white/45" />
+            <div className="relative min-w-0 flex-1 md:max-w-[15rem] xl:max-w-sm">
+              <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#16351b]/55" />
               <Input
-                className="pl-11"
+                className="border-emerald-950/15 bg-[#dbe8d8] pl-11 text-[#16351b] placeholder:text-[#16351b]/45 focus:border-emerald-900/28 focus:bg-[#e5eee2]"
                 onChange={(event) => onSearchChange(event.target.value)}
                 placeholder={t("toolbar.searchPlaceholder")}
                 value={searchQuery}
@@ -162,7 +162,7 @@ export function MapToolbar({
               </div>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex shrink-0 items-center gap-1.5">
               {authSlot}
               <div className="flex rounded-full border border-white/8 bg-[#06120a]/96 p-1">
                 <button
@@ -187,7 +187,7 @@ export function MapToolbar({
                 </button>
               </div>
 
-              <Button className="h-11 shrink-0 rounded-2xl px-4" disabled={!canEdit} onClick={onAddDestination} variant={addMode ? "accent" : "primary"}>
+              <Button className="h-11 shrink-0 rounded-2xl px-3.5" disabled={!canEdit} onClick={onAddDestination} variant={addMode ? "accent" : "primary"}>
                 <Plus className="size-4" />
                 <span className="sr-only">
                   {addMode
@@ -223,9 +223,9 @@ export function MapToolbar({
             <div className="border-b border-emerald-950/70 bg-[linear-gradient(180deg,rgba(6,20,10,1),rgba(3,11,5,0.98))] px-4 py-4">
               <p className="eyebrow">{t("toolbar.search")}</p>
               <div className="relative mt-3">
-                <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-white/45" />
+                <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#16351b]/55" />
                 <Input
-                  className="pl-11"
+                  className="border-emerald-950/15 bg-[#dbe8d8] pl-11 text-[#16351b] placeholder:text-[#16351b]/45 focus:border-emerald-900/28 focus:bg-[#e5eee2]"
                   onChange={(event) => onSearchChange(event.target.value)}
                   placeholder={t("toolbar.searchPlaceholder")}
                   value={searchQuery}

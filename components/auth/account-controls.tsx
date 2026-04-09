@@ -34,10 +34,11 @@ export function AccountControls({
   userEmail
 }: AccountControlsProps) {
   const [newTitle, setNewTitle] = useState("");
+  const compactAccountLabel = getCompactAccountLabel(userEmail);
 
   if (guestMode) {
     return (
-      <Button onClick={onOpenAuth} type="button" variant="secondary">
+      <Button className="shrink-0" onClick={onOpenAuth} type="button" variant="secondary">
         <UserRound className="size-4" />
         Guest
       </Button>
@@ -46,13 +47,23 @@ export function AccountControls({
 
   return (
     <details className="group relative">
-      <summary className="flex cursor-pointer list-none items-center gap-2 rounded-full border border-white/8 bg-[#06120a]/96 px-3 py-2 text-sm text-white/78 marker:hidden">
+      <summary
+        className="flex shrink-0 cursor-pointer list-none items-center gap-2 rounded-full border border-white/8 bg-[#06120a]/96 px-3 py-2 text-sm text-white/78 marker:hidden"
+        title={userEmail || "Account"}
+      >
         <UserRound className="size-4" />
-        <span className="max-w-[10rem] truncate">{userEmail || "Account"}</span>
+        <span className="max-w-[4ch] overflow-hidden text-ellipsis whitespace-nowrap font-medium uppercase tracking-[0.18em]">
+          {compactAccountLabel}
+        </span>
       </summary>
 
-      <div className="absolute right-0 top-[calc(100%+0.75rem)] z-30 w-[19rem] rounded-[24px] border border-emerald-950/80 bg-[#051007]/98 p-4 shadow-[0_28px_80px_rgba(0,0,0,0.48)] backdrop-blur-2xl">
+      <div className="absolute right-0 top-[calc(100%+0.75rem)] z-30 w-[18rem] rounded-[24px] border border-emerald-950/80 bg-[#051007]/98 p-4 shadow-[0_28px_80px_rgba(0,0,0,0.48)] backdrop-blur-2xl sm:w-[19rem]">
         <p className="eyebrow">Trip Maps</p>
+        {userEmail ? (
+          <p className="mt-2 truncate text-sm text-white/56" title={userEmail}>
+            {userEmail}
+          </p>
+        ) : null}
         <div className="mt-3 space-y-3">
           <select
             className="w-full rounded-2xl border border-white/8 bg-[#06131d] px-4 py-3 text-sm text-white outline-none"
@@ -106,4 +117,10 @@ export function AccountControls({
       </div>
     </details>
   );
+}
+
+function getCompactAccountLabel(userEmail?: string | null) {
+  const source = (userEmail || "acct").trim();
+  const firstChunk = source.split("@")[0] || source;
+  return firstChunk.slice(0, 4) || "acct";
 }

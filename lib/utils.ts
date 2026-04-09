@@ -125,6 +125,19 @@ export function formatDateRange(
   if (destination.startDate && destination.endDate) {
     const start = new Date(`${destination.startDate}T00:00:00`);
     const end = new Date(`${destination.endDate}T00:00:00`);
+
+    if (locale.startsWith("zh")) {
+      if (destination.startDate === destination.endDate) {
+        return formatChineseDate(start, true);
+      }
+
+      if (start.getFullYear() === end.getFullYear()) {
+        return `${formatChineseDate(start, true)} - ${formatChineseDate(end, false)}`;
+      }
+
+      return `${formatChineseDate(start, true)} - ${formatChineseDate(end, true)}`;
+    }
+
     const startLabel = start.toLocaleDateString(locale, {
       month: "short",
       day: "numeric",
@@ -145,11 +158,20 @@ export function formatDateRange(
 
   const single = new Date(`${destination.startDate || destination.endDate}T00:00:00`);
 
+  if (locale.startsWith("zh")) {
+    return formatChineseDate(single, true);
+  }
+
   return single.toLocaleDateString(locale, {
     month: "short",
     day: "numeric",
     year: "numeric"
   });
+}
+
+function formatChineseDate(date: Date, includeYear: boolean) {
+  const yearPrefix = includeYear ? `${date.getFullYear()}年` : "";
+  return `${yearPrefix}${date.getMonth() + 1}月${date.getDate()}日`;
 }
 
 export function getDestinationSortTime(destination: Pick<Destination, "startDate" | "endDate" | "createdAt">) {

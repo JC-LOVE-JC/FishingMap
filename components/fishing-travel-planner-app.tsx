@@ -499,6 +499,22 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
     );
   }
 
+  async function persistDestinationsImmediately(nextDestinations: Destination[]) {
+    if (!supabaseEnabled || !supabase || !authUser || !currentTripMap || sharedSlug) {
+      return nextDestinations;
+    }
+
+    const syncedDestinations = await saveTripMapSnapshot(supabase, {
+      destinations: nextDestinations,
+      tripMap: currentTripMap,
+      user: authUser
+    });
+
+    skipRemoteSyncRef.current = true;
+    setDestinations(syncedDestinations);
+    return syncedDestinations;
+  }
+
   function handleToggleFilter(status: DestinationStatus) {
     setActiveFilters((current) => {
       if (current.includes(status)) {
@@ -727,7 +743,7 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
     });
   }
 
-  function handleSaveDraft() {
+  async function handleSaveDraft() {
     if (!canEdit || !draftDestination) {
       return;
     }
@@ -768,15 +784,20 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
       return;
     }
 
-    setDestinations((current) => {
-      if (formMode === "edit") {
-        return current.map((destination) =>
-          destination.id === normalized.id ? normalized : destination
-        );
-      }
+    const nextDestinations =
+      formMode === "edit"
+        ? destinations.map((destination) =>
+            destination.id === normalized.id ? normalized : destination
+          )
+        : [normalized, ...destinations];
 
-      return [normalized, ...current];
-    });
+    setDestinations(nextDestinations);
+
+    try {
+      await persistDestinationsImmediately(nextDestinations);
+    } catch (error) {
+      setViewerError(error instanceof Error ? error.message : "Saving to Supabase failed");
+    }
 
     startTransition(() => {
       setSelectedId(normalized.id);

@@ -63,7 +63,7 @@ export function TimelineSidebar({
           : "translate-x-0 translate-y-0"
       )}
     >
-      <div className="w-[18rem] sm:w-[20rem] xl:w-[24rem]">
+      <div className="w-[min(18rem,calc(100vw-4.75rem))] sm:w-[20rem] xl:w-[24rem]">
       <div className="pointer-events-auto flex h-full max-h-none flex-col overflow-hidden rounded-[30px] border border-emerald-950/80 bg-[#051007]/98 shadow-[0_28px_80px_rgba(0,0,0,0.52)] backdrop-blur-2xl xl:rounded-[32px]">
         <div className="border-b border-emerald-950/70 bg-[linear-gradient(180deg,rgba(6,20,10,1),rgba(3,11,5,0.98))] px-5 py-5">
           <div className="flex items-center gap-3">
@@ -77,8 +77,8 @@ export function TimelineSidebar({
           </div>
         </div>
 
-        <div className="overflow-y-auto px-5 py-5">
-          <div className="relative space-y-8 pl-5">
+        <div className="overflow-x-hidden overflow-y-auto px-4 py-5 sm:px-5">
+          <div className="relative space-y-8 pl-4 sm:pl-5">
             <div className="pointer-events-none absolute bottom-0 left-[0.45rem] top-0 w-px bg-[linear-gradient(180deg,rgba(34,197,94,0.3),rgba(34,197,94,0.06))]" />
             {sections.map((section) => (
               <section className="relative" key={section.id}>
@@ -117,7 +117,7 @@ export function TimelineSidebar({
 
                     return (
                       <div
-                        className={`relative w-full overflow-hidden rounded-[24px] border px-4 py-4 text-left transition ${
+                        className={`relative w-full overflow-hidden rounded-[24px] border px-3.5 py-3.5 text-left transition sm:px-4 sm:py-4 ${
                           selected
                             ? "border-lime-300/30 bg-[#102014] shadow-[0_0_32px_rgba(190,242,100,0.08)]"
                             : `${accent.card} hover:bg-[#102014]`
@@ -145,8 +145,8 @@ export function TimelineSidebar({
                         <div className="absolute left-[-1.02rem] top-7 flex size-3 items-center justify-center rounded-full border border-white/10 bg-[#06101d]">
                           <div className={cn("size-1.5 rounded-full", accent.node)} />
                         </div>
-                        <div className="relative flex items-start gap-4">
-                          <div className="min-w-[4.1rem] shrink-0 rounded-[18px] border border-white/6 bg-black/20 px-3 py-2 text-left">
+                        <div className="relative flex flex-col items-start gap-3 sm:flex-row sm:gap-4">
+                          <div className="min-w-[3.75rem] shrink-0 rounded-[18px] border border-white/6 bg-black/20 px-3 py-2 text-left sm:min-w-[4.1rem]">
                             <p className="text-[0.65rem] uppercase tracking-[0.24em] text-white/34">
                               {date.month}
                             </p>
@@ -156,14 +156,14 @@ export function TimelineSidebar({
                           </div>
 
                           <div className="min-w-0 flex-1">
-                            <p className="text-[0.68rem] uppercase tracking-[0.26em] text-white/34">
+                            <p className="whitespace-nowrap text-[0.62rem] uppercase tracking-[0.22em] text-white/34 sm:text-[0.68rem] sm:tracking-[0.26em]">
                               {formatDateRange(expedition, locale)}
                             </p>
-                            <div className="mt-2 flex items-start justify-between gap-3">
-                              <h3 className="font-display text-xl text-white">{expedition.name}</h3>
+                            <div className="mt-2 flex flex-col items-start gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                              <h3 className="break-words font-display text-[1.15rem] leading-tight text-white sm:text-xl">{expedition.name}</h3>
                               {canEdit ? (
                                 <button
-                                  className="rounded-full border border-white/8 bg-[#091725] p-2 text-white/60 transition hover:border-white/14 hover:text-white"
+                                  className="self-end rounded-full border border-white/8 bg-[#091725] p-2 text-white/60 transition hover:border-white/14 hover:text-white sm:self-auto"
                                   onClick={(event) => {
                                     event.stopPropagation();
                                     onDeleteExpedition(expedition.id);
@@ -175,7 +175,7 @@ export function TimelineSidebar({
                                 </button>
                               ) : null}
                             </div>
-                            <p className="mt-1 text-sm text-white/66">
+                            <p className="mt-1 break-words text-sm text-white/66">
                               {leadDestination ? formatLocation(leadDestination) : t("timeline.routeNotSet")}
                             </p>
                             <p className="mt-2 text-xs uppercase tracking-[0.22em] text-white/34">
@@ -185,9 +185,9 @@ export function TimelineSidebar({
                             {selected ? (
                               <div className="mt-4 space-y-2 border-t border-white/8 pt-3">
                                 {expedition.destinations.map((destination) => (
-                                  <div className="flex items-center gap-2" key={destination.id}>
+                                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center" key={destination.id}>
                                     <button
-                                      className={`flex flex-1 items-center justify-between rounded-2xl border px-3 py-2.5 text-left transition ${
+                                      className={`flex flex-1 rounded-2xl border px-3 py-2.5 text-left transition ${
                                         selectedId === destination.id
                                           ? "border-lime-300/28 bg-[#18281b] text-white"
                                           : "border-white/6 bg-[#09130b] text-white/78 hover:bg-[#101b13]"
@@ -198,24 +198,24 @@ export function TimelineSidebar({
                                       }}
                                       type="button"
                                     >
-                                      <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
+                                      <div className="flex min-w-0 flex-1 flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                                         <span className="min-w-0">
-                                          <span className="block text-[0.68rem] uppercase tracking-[0.24em] text-white/36">
+                                          <span className="block whitespace-nowrap text-[0.62rem] uppercase tracking-[0.2em] text-white/36 sm:text-[0.68rem] sm:tracking-[0.24em]">
                                             {formatDateRange(destination, locale)}
                                           </span>
-                                          <span className="mt-1 block truncate text-sm font-medium">{destination.city || destination.title}</span>
+                                          <span className="mt-1 block break-words text-sm font-medium">{destination.city || destination.title}</span>
                                           <span className="block text-xs uppercase tracking-[0.18em] text-white/40">
                                             {destination.country}
                                           </span>
                                         </span>
-                                        <span className="ml-3 text-right text-[0.68rem] uppercase tracking-[0.22em] text-white/32">
+                                        <span className="text-left text-[0.64rem] uppercase tracking-[0.18em] text-white/32 sm:ml-3 sm:text-right sm:text-[0.68rem] sm:tracking-[0.22em]">
                                           {formatStopOrdinal(destination.stopOrder || 1, language)}
                                         </span>
                                       </div>
                                     </button>
                                     {canEdit ? (
                                       <button
-                                        className="rounded-full border border-white/8 bg-[#091725] p-2 text-white/60 transition hover:border-white/14 hover:text-white"
+                                        className="self-end rounded-full border border-white/8 bg-[#091725] p-2 text-white/60 transition hover:border-white/14 hover:text-white sm:self-auto"
                                         onClick={(event) => {
                                           event.stopPropagation();
                                           onDeleteDestination(destination.id);
