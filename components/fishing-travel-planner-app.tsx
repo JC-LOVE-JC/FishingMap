@@ -69,6 +69,7 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
   const [activeFilters, setActiveFilters] = useState<DestinationStatus[]>(STATUS_ORDER);
   const [isLoaded, setIsLoaded] = useState(false);
   const [authUser, setAuthUser] = useState<User | null>(null);
+  const [authResolved, setAuthResolved] = useState(!supabaseEnabled);
   const [guestMode, setGuestMode] = useState(Boolean(sharedSlug));
   const [authBusy, setAuthBusy] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
@@ -116,6 +117,7 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
       }
 
       setAuthUser(data.session?.user ?? null);
+      setAuthResolved(true);
       if (data.session?.user) {
         setGuestMode(false);
       }
@@ -129,6 +131,7 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
       }
 
       setAuthUser(session?.user ?? null);
+      setAuthResolved(true);
       if (session?.user) {
         setGuestMode(false);
         setAuthDialogOpen(false);
@@ -194,6 +197,10 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
       }
 
       if (!supabase) {
+        return;
+      }
+
+      if (!sharedSlug && !authResolved) {
         return;
       }
 
@@ -272,7 +279,7 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
     return () => {
       cancelled = true;
     };
-  }, [activeTripMapId, authUser, guestMode, sharedSlug, supabase, supabaseEnabled]);
+  }, [activeTripMapId, authResolved, authUser, guestMode, sharedSlug, supabase, supabaseEnabled]);
 
   useEffect(() => {
     if (!isLoaded || supabaseEnabled) {
@@ -541,8 +548,13 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
   }
 
   async function persistDestinationsImmediately(nextDestinations: Destination[]) {
-    if (!supabaseEnabled || !supabase || !authUser || !currentTripMap || sharedSlug) {
+    if (!supabaseEnabled || sharedSlug) {
+      setDestinations(nextDestinations);
       return nextDestinations;
+    }
+
+    if (!supabase || !authUser || !currentTripMap) {
+      throw new Error("Supabase session is not ready yet. Please try saving again.");
     }
 
     const syncedDestinations = await saveTripMapSnapshot(supabase, {
@@ -766,22 +778,26 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
       return;
     }
 
-    setDestinations((current) =>
-      current.map((destination) =>
-        destination.id === transportDraft.destinationId
-          ? {
-              ...destination,
-              transportFromPrevious: normalizeTransportSegment(transportDraft.segment),
-              updatedAt: new Date().toISOString()
-            }
-          : destination
-      )
+    const nextDestinations = destinations.map((destination) =>
+      destination.id === transportDraft.destinationId
+        ? {
+            ...destination,
+            transportFromPrevious: normalizeTransportSegment(transportDraft.segment),
+            updatedAt: new Date().toISOString()
+          }
+        : destination
     );
 
-    startTransition(() => {
-      setTransportDraft(null);
-      setMapPickMode(false);
-    });
+    void persistDestinationsImmediately(nextDestinations)
+      .then(() => {
+        startTransition(() => {
+          setTransportDraft(null);
+          setMapPickMode(false);
+        });
+      })
+      .catch((error) => {
+        setViewerError(error instanceof Error ? error.message : "Saving to Supabase failed");
+      });
   }
 
   async function handleSaveDraft() {
@@ -832,12 +848,11 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
           )
         : [normalized, ...destinations];
 
-    setDestinations(nextDestinations);
-
     try {
       await persistDestinationsImmediately(nextDestinations);
     } catch (error) {
       setViewerError(error instanceof Error ? error.message : "Saving to Supabase failed");
+      return;
     }
 
     startTransition(() => {
@@ -864,22 +879,28 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
       return;
     }
 
-    setDestinations((current) => deleteDestinationFromList(current, destinationId));
+    const nextDestinations = deleteDestinationFromList(destinations, destinationId);
 
-    startTransition(() => {
-      if (selectedId === destinationId) {
-        setSelectedId(null);
-      }
+    void persistDestinationsImmediately(nextDestinations)
+      .then(() => {
+        startTransition(() => {
+          if (selectedId === destinationId) {
+            setSelectedId(null);
+          }
 
-      if (draftDestination?.id === destinationId) {
-        setDraftDestination(null);
-        setFormMode(null);
-      }
+          if (draftDestination?.id === destinationId) {
+            setDraftDestination(null);
+            setFormMode(null);
+          }
 
-      if (transportDraft?.destinationId === destinationId) {
-        setTransportDraft(null);
-      }
-    });
+          if (transportDraft?.destinationId === destinationId) {
+            setTransportDraft(null);
+          }
+        });
+      })
+      .catch((error) => {
+        setViewerError(error instanceof Error ? error.message : "Saving to Supabase failed");
+      });
   }
 
   function handleDeleteExpedition(expeditionId: string) {
@@ -887,18 +908,24 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
       return;
     }
 
-    setDestinations((current) =>
-      current.filter((destination) => destination.expeditionId !== expeditionId)
+    const nextDestinations = destinations.filter(
+      (destination) => destination.expeditionId !== expeditionId
     );
 
-    startTransition(() => {
-      if (selectedExpeditionId === expeditionId) {
-        setSelectedId(null);
-        setDraftDestination(null);
-        setFormMode(null);
-        setTransportDraft(null);
-      }
-    });
+    void persistDestinationsImmediately(nextDestinations)
+      .then(() => {
+        startTransition(() => {
+          if (selectedExpeditionId === expeditionId) {
+            setSelectedId(null);
+            setDraftDestination(null);
+            setFormMode(null);
+            setTransportDraft(null);
+          }
+        });
+      })
+      .catch((error) => {
+        setViewerError(error instanceof Error ? error.message : "Saving to Supabase failed");
+      });
   }
 
   function handleSetTimelineCollapsed(collapsed: boolean) {
