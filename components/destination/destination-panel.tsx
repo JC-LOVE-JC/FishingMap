@@ -43,6 +43,7 @@ import {
 
 type DestinationPanelProps = {
   addMode: boolean;
+  canEdit: boolean;
   detailsCollapsed: boolean;
   draftDestination: Destination | null;
   expeditionSuggestions: string[];
@@ -83,6 +84,7 @@ type DestinationPanelProps = {
 
 export function DestinationPanel({
   addMode,
+  canEdit,
   detailsCollapsed,
   draftDestination,
   expeditionSuggestions,
@@ -234,6 +236,7 @@ export function DestinationPanel({
   return (
     <>
       <TimelineSidebar
+        canEdit={canEdit}
         collapsed={timelineCollapsed}
         onDeleteDestination={onDeleteDestination}
         onDeleteExpedition={onDeleteExpedition}
@@ -377,10 +380,12 @@ export function DestinationPanel({
                   </div>
 
                   <div className="flex flex-wrap gap-2">
-                    <Button onClick={() => onDeleteDestination(selectedDestination.id)} type="button" variant="ghost">
-                      <Trash2 className="size-4" />
-                      {t("overview.deleteStop")}
-                    </Button>
+                    {canEdit ? (
+                      <Button onClick={() => onDeleteDestination(selectedDestination.id)} type="button" variant="ghost">
+                        <Trash2 className="size-4" />
+                        {t("overview.deleteStop")}
+                      </Button>
+                    ) : null}
                     <Button onClick={onShowOverview} type="button" variant="ghost">
                       {t("overview.atlas")}
                     </Button>
@@ -416,12 +421,14 @@ export function DestinationPanel({
                         {selectedDestination.summary || (language === "zh" ? "尚未填写简介。" : "No summary added yet.")}
                       </p>
                     </div>
+                  {canEdit ? (
                     <Button onClick={onEditSelected} type="button" variant="secondary">
                       <Edit3 className="size-4" />
                       {t("overview.edit")}
                     </Button>
-                  </div>
+                  ) : null}
                 </div>
+              </div>
 
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="panel-section rounded-[24px] p-4">
@@ -593,19 +600,21 @@ export function DestinationPanel({
                   <div className="panel-section rounded-[28px] p-5">
                     <div className="flex items-center justify-between gap-3">
                       <p className="eyebrow">{t("overview.expeditionRoute")}</p>
-                      <div className="flex flex-wrap gap-2">
-                        <Button onClick={onAddStopToExpedition} type="button" variant="secondary">
-                          {t("overview.addStop")}
-                        </Button>
-                        <Button
-                          onClick={() => onDeleteExpedition(selectedExpedition.id)}
-                          type="button"
-                          variant="ghost"
-                        >
-                          <Trash2 className="size-4" />
-                          {t("overview.deleteTrip")}
-                        </Button>
-                      </div>
+                      {canEdit ? (
+                        <div className="flex flex-wrap gap-2">
+                          <Button onClick={onAddStopToExpedition} type="button" variant="secondary">
+                            {t("overview.addStop")}
+                          </Button>
+                          <Button
+                            onClick={() => onDeleteExpedition(selectedExpedition.id)}
+                            type="button"
+                            variant="ghost"
+                          >
+                            <Trash2 className="size-4" />
+                            {t("overview.deleteTrip")}
+                          </Button>
+                        </div>
+                      ) : null}
                     </div>
                     <div className="mt-4 space-y-2">
                       {selectedExpedition.destinations.map((stop) => (
@@ -634,6 +643,7 @@ export function DestinationPanel({
                               </span>
                               <span className="text-xs text-white/45">{formatDateRange(stop, locale)}</span>
                             </button>
+                          {canEdit ? (
                             <button
                               className="rounded-full border border-white/8 bg-[#091725] p-2 text-white/60 transition hover:border-white/14 hover:text-white"
                               onClick={() => onDeleteDestination(stop.id)}
@@ -642,12 +652,13 @@ export function DestinationPanel({
                               <Trash2 className="size-4" />
                               <span className="sr-only">{t("timeline.deleteStop")}</span>
                             </button>
-                          </div>
+                          ) : null}
+                        </div>
 
-                          {(stop.stopOrder ?? 1) > 1 ? (
-                            <button
-                              className="mt-3 w-full rounded-xl border border-white/6 bg-[#101b13] px-3 py-2 text-left text-xs text-white/72 transition hover:bg-[#18281b]"
-                              onClick={() => onEditTransport(stop.id)}
+                        {canEdit && (stop.stopOrder ?? 1) > 1 ? (
+                          <button
+                            className="mt-3 w-full rounded-xl border border-white/6 bg-[#101b13] px-3 py-2 text-left text-xs text-white/72 transition hover:bg-[#18281b]"
+                            onClick={() => onEditTransport(stop.id)}
                               type="button"
                             >
                               {formatTransportSummary(
@@ -664,19 +675,21 @@ export function DestinationPanel({
                   <div className="panel-section rounded-[28px] p-5">
                     <div className="flex items-center justify-between gap-3">
                       <p className="eyebrow">{t("overview.expeditionRoute")}</p>
-                      <div className="flex flex-wrap gap-2">
-                        <Button onClick={onAddStopToExpedition} type="button" variant="secondary">
-                          {t("overview.addStop")}
-                        </Button>
-                        <Button
-                          onClick={() => onDeleteExpedition(selectedExpedition.id)}
-                          type="button"
-                          variant="ghost"
-                        >
-                          <Trash2 className="size-4" />
-                          {t("overview.deleteTrip")}
-                        </Button>
-                      </div>
+                      {canEdit ? (
+                        <div className="flex flex-wrap gap-2">
+                          <Button onClick={onAddStopToExpedition} type="button" variant="secondary">
+                            {t("overview.addStop")}
+                          </Button>
+                          <Button
+                            onClick={() => onDeleteExpedition(selectedExpedition.id)}
+                            type="button"
+                            variant="ghost"
+                          >
+                            <Trash2 className="size-4" />
+                            {t("overview.deleteTrip")}
+                          </Button>
+                        </div>
+                      ) : null}
                     </div>
                     <p className="mt-3 text-sm leading-6 text-white/68">
                       {t("overview.oneStopMessage")}

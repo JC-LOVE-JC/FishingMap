@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.10.0",
+    "@supabase/supabase-js": "^2.102.1",
     "@vis.gl/react-maplibre": "^8.0.4",
     "d3-geo": "^3.1.1",
     "framer-motion": "^11.11.17",

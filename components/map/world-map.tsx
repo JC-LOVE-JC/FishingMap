@@ -13,6 +13,7 @@ import { TRANSPORT_MODE_META, cn } from "@/lib/utils";
 
 type WorldMapProps = {
   addMode: boolean;
+  canEdit: boolean;
   destinations: Destination[];
   draftCoordinates: { lat: number; lng: number } | null;
   focusTarget: Pick<Destination, "lat" | "lng"> | null;
@@ -68,6 +69,7 @@ const TRANSPORT_ROUTE_META = {
 
 export function WorldMap({
   addMode,
+  canEdit,
   destinations,
   draftCoordinates,
   focusTarget,
@@ -316,7 +318,9 @@ export function WorldMap({
                 className={`group relative flex size-[3.8rem] items-center justify-center rounded-[1.55rem] border shadow-[0_16px_30px_rgba(0,0,0,0.34)] backdrop-blur-xl transition hover:scale-[1.03] ${routeMeta.buttonClassName}`}
                 onClick={(event) => {
                   event.stopPropagation();
-                  onEditTransport(marker.destinationId);
+                  if (canEdit) {
+                    onEditTransport(marker.destinationId);
+                  }
                 }}
                 onMouseEnter={() => setHoveredTransportDestinationId(marker.destinationId)}
                 onMouseLeave={() => setHoveredTransportDestinationId((current) => (current === marker.destinationId ? null : current))}

@@ -9,6 +9,7 @@ import type { TimelineExpedition } from "@/lib/types";
 import { WATER_TYPE_META, cn, formatDateRange, formatLocation } from "@/lib/utils";
 
 type TimelineSidebarProps = {
+  canEdit: boolean;
   collapsed: boolean;
   onDeleteDestination: (destinationId: string) => void;
   onDeleteExpedition: (expeditionId: string) => void;
@@ -20,6 +21,7 @@ type TimelineSidebarProps = {
 };
 
 export function TimelineSidebar({
+  canEdit,
   collapsed,
   onDeleteDestination,
   onDeleteExpedition,
@@ -159,17 +161,19 @@ export function TimelineSidebar({
                             </p>
                             <div className="mt-2 flex items-start justify-between gap-3">
                               <h3 className="font-display text-xl text-white">{expedition.name}</h3>
-                              <button
-                                className="rounded-full border border-white/8 bg-[#091725] p-2 text-white/60 transition hover:border-white/14 hover:text-white"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  onDeleteExpedition(expedition.id);
-                                }}
-                                type="button"
-                              >
-                                <Trash2 className="size-4" />
-                                <span className="sr-only">{t("timeline.deleteTrip")}</span>
-                              </button>
+                              {canEdit ? (
+                                <button
+                                  className="rounded-full border border-white/8 bg-[#091725] p-2 text-white/60 transition hover:border-white/14 hover:text-white"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    onDeleteExpedition(expedition.id);
+                                  }}
+                                  type="button"
+                                >
+                                  <Trash2 className="size-4" />
+                                  <span className="sr-only">{t("timeline.deleteTrip")}</span>
+                                </button>
+                              ) : null}
                             </div>
                             <p className="mt-1 text-sm text-white/66">
                               {leadDestination ? formatLocation(leadDestination) : t("timeline.routeNotSet")}
@@ -209,17 +213,19 @@ export function TimelineSidebar({
                                         </span>
                                       </div>
                                     </button>
-                                    <button
-                                      className="rounded-full border border-white/8 bg-[#091725] p-2 text-white/60 transition hover:border-white/14 hover:text-white"
-                                      onClick={(event) => {
-                                        event.stopPropagation();
-                                        onDeleteDestination(destination.id);
-                                      }}
-                                      type="button"
-                                    >
-                                      <Trash2 className="size-4" />
-                                      <span className="sr-only">{t("timeline.deleteStop")}</span>
-                                    </button>
+                                    {canEdit ? (
+                                      <button
+                                        className="rounded-full border border-white/8 bg-[#091725] p-2 text-white/60 transition hover:border-white/14 hover:text-white"
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          onDeleteDestination(destination.id);
+                                        }}
+                                        type="button"
+                                      >
+                                        <Trash2 className="size-4" />
+                                        <span className="sr-only">{t("timeline.deleteStop")}</span>
+                                      </button>
+                                    ) : null}
                                   </div>
                                 ))}
                               </div>

@@ -1,13 +1,34 @@
 "use client";
 
-import { useDeferredValue, useEffect, useState, useTransition } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
+
+import type { User } from "@supabase/supabase-js";
 
 import seedDestinations from "@/data/destinations.json";
+import { AccountControls } from "@/components/auth/account-controls";
+import { AuthGate } from "@/components/auth/auth-gate";
 import { DestinationPanel } from "@/components/destination/destination-panel";
 import { MapToolbar } from "@/components/map/map-toolbar";
 import { WorldMap } from "@/components/map/world-map";
 import { loadStoredDestinations, saveStoredDestinations } from "@/lib/client-storage";
 import { LANGUAGE_STORAGE_KEY, LanguageProvider, type Language } from "@/lib/i18n";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
+import {
+  createTripMap,
+  ensureOwnedTripMap,
+  loadOwnedTripMapSnapshot,
+  loadSharedTripMapSnapshot,
+  saveTripMapSnapshot,
+  setTripMapPublicState
+} from "@/lib/supabase/repository";
+import type {
+  Destination,
+  DestinationStatus,
+  LocationSuggestion,
+  TransportSegment,
+  TripMap
+} from "@/lib/types";
 import {
   STATUS_ORDER,
   STORAGE_KEY,
@@ -21,17 +42,16 @@ import {
   normalizeTransportSegment,
   parseStoredDestinations
 } from "@/lib/utils";
-import type {
-  Destination,
-  DestinationStatus,
-  LocationSuggestion,
-  TransportSegment
-} from "@/lib/types";
 
 const seeded = (seedDestinations as Destination[]).map(normalizeDestination);
 
-export function FishingTravelPlannerApp() {
-  const [destinations, setDestinations] = useState<Destination[]>(seeded);
+export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string }) {
+  const supabaseEnabled = isSupabaseConfigured();
+  const supabase = useMemo(
+    () => (supabaseEnabled ? getSupabaseBrowserClient() : null),
+    [supabaseEnabled]
+  );
+  const [destinations, setDestinations] = useState<Destination[]>(supabaseEnabled ? [] : seeded);
   const [language, setLanguage] = useState<Language>("en");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draftDestination, setDraftDestination] = useState<Destination | null>(null);
@@ -48,63 +68,190 @@ export function FishingTravelPlannerApp() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilters, setActiveFilters] = useState<DestinationStatus[]>(STATUS_ORDER);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [authUser, setAuthUser] = useState<User | null>(null);
+  const [guestMode, setGuestMode] = useState(Boolean(sharedSlug));
+  const [authBusy, setAuthBusy] = useState(false);
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [tripMaps, setTripMaps] = useState<TripMap[]>([]);
+  const [activeTripMapId, setActiveTripMapId] = useState<string | null>(null);
+  const [viewerError, setViewerError] = useState<string | null>(null);
   const deferredSearch = useDeferredValue(searchQuery);
   const [isPending, startTransition] = useTransition();
+  const skipRemoteSyncRef = useRef(false);
 
   function isMobileViewport() {
     return typeof window !== "undefined" && window.innerWidth < 1024;
   }
 
+  const currentTripMap =
+    tripMaps.find((tripMap) => tripMap.id === activeTripMapId) ?? null;
+  const canEdit = !supabaseEnabled || (!!authUser && !sharedSlug);
+  const shouldShowAuthGate =
+    supabaseEnabled &&
+    !sharedSlug &&
+    ((authDialogOpen || (!authUser && !guestMode)));
+
+  useEffect(() => {
+    if (!supabase) {
+      return;
+    }
+
+    let mounted = true;
+
+    void supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) {
+        return;
+      }
+
+      setAuthUser(data.session?.user ?? null);
+      if (data.session?.user) {
+        setGuestMode(false);
+      }
+    });
+
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) {
+        return;
+      }
+
+      setAuthUser(session?.user ?? null);
+      if (session?.user) {
+        setGuestMode(false);
+        setAuthDialogOpen(false);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
+
   useEffect(() => {
     let cancelled = false;
 
     void (async () => {
+      if (!supabaseEnabled) {
+        try {
+          const indexedDbStored = await loadStoredDestinations();
+          const legacyStored =
+            parseStoredDestinations(window.localStorage.getItem(STORAGE_KEY))
+            ?? parseStoredDestinations(window.localStorage.getItem("fishing-travel-planner.destinations.v5"));
+          const stored = indexedDbStored?.length ? indexedDbStored : legacyStored;
+          const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+
+          if (!cancelled && stored?.length) {
+            setDestinations(stored);
+          }
+
+          if (!cancelled && (storedLanguage === "en" || storedLanguage === "zh")) {
+            setLanguage(storedLanguage as Language);
+          }
+
+          if (!cancelled && window.innerWidth < 1024) {
+            setTimelineCollapsed(true);
+            setDetailsCollapsed(true);
+            setSearchCollapsed(true);
+          }
+
+          if (stored?.length) {
+            await saveStoredDestinations(stored);
+          }
+        } catch {
+          const fallbackStored =
+            parseStoredDestinations(window.localStorage.getItem(STORAGE_KEY))
+            ?? parseStoredDestinations(window.localStorage.getItem("fishing-travel-planner.destinations.v5"));
+          const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+
+          if (!cancelled && fallbackStored?.length) {
+            setDestinations(fallbackStored);
+          }
+
+          if (!cancelled && (storedLanguage === "en" || storedLanguage === "zh")) {
+            setLanguage(storedLanguage as Language);
+          }
+        } finally {
+          if (!cancelled) {
+            setIsLoaded(true);
+          }
+        }
+
+        return;
+      }
+
+      if (!supabase) {
+        return;
+      }
+
       try {
-        const indexedDbStored = await loadStoredDestinations();
-        const legacyStored =
-          parseStoredDestinations(window.localStorage.getItem(STORAGE_KEY))
-          ?? parseStoredDestinations(window.localStorage.getItem("fishing-travel-planner.destinations.v5"));
-        const stored = indexedDbStored?.length ? indexedDbStored : legacyStored;
-        const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+        setViewerError(null);
 
-        if (!cancelled && stored?.length) {
-          setDestinations(stored);
+        if (sharedSlug) {
+          const snapshot = await loadSharedTripMapSnapshot(supabase, sharedSlug);
+
+          if (cancelled) {
+            return;
+          }
+
+          setTripMaps(snapshot ? [snapshot.tripMap] : []);
+          setActiveTripMapId(snapshot?.tripMap.id ?? null);
+          setDestinations(snapshot?.destinations ?? []);
+          setIsLoaded(true);
+          return;
         }
 
-        if (!cancelled && (storedLanguage === "en" || storedLanguage === "zh")) {
-          setLanguage(storedLanguage as Language);
+        if (authUser) {
+          const maps = await ensureOwnedTripMap(supabase, authUser);
+
+          if (cancelled) {
+            return;
+          }
+
+          setTripMaps(maps);
+          const nextTripMapId =
+            activeTripMapId && maps.some((tripMap) => tripMap.id === activeTripMapId)
+              ? activeTripMapId
+              : maps[0]?.id ?? null;
+
+          if (!nextTripMapId) {
+            setDestinations([]);
+            setIsLoaded(true);
+            return;
+          }
+
+          if (nextTripMapId !== activeTripMapId) {
+            setActiveTripMapId(nextTripMapId);
+          }
+
+          const snapshot = await loadOwnedTripMapSnapshot(supabase, authUser.id, nextTripMapId);
+
+          if (cancelled) {
+            return;
+          }
+
+          skipRemoteSyncRef.current = true;
+          setDestinations(snapshot?.destinations ?? []);
+          setIsLoaded(true);
+          return;
         }
 
-        if (!cancelled && window.innerWidth < 1024) {
-          setTimelineCollapsed(true);
-          setDetailsCollapsed(true);
-          setSearchCollapsed(true);
+        if (guestMode) {
+          setTripMaps([]);
+          setActiveTripMapId(null);
+          setDestinations([]);
+          setIsLoaded(true);
+          return;
         }
 
-        if (stored?.length) {
-          await saveStoredDestinations(stored);
-        }
-      } catch {
-        const fallbackStored =
-          parseStoredDestinations(window.localStorage.getItem(STORAGE_KEY))
-          ?? parseStoredDestinations(window.localStorage.getItem("fishing-travel-planner.destinations.v5"));
-        const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
-
-        if (!cancelled && fallbackStored?.length) {
-          setDestinations(fallbackStored);
-        }
-
-        if (!cancelled && (storedLanguage === "en" || storedLanguage === "zh")) {
-          setLanguage(storedLanguage as Language);
-        }
-
-        if (!cancelled && window.innerWidth < 1024) {
-          setTimelineCollapsed(true);
-          setDetailsCollapsed(true);
-          setSearchCollapsed(true);
-        }
-      } finally {
+        setTripMaps([]);
+        setActiveTripMapId(null);
+        setDestinations([]);
+        setIsLoaded(true);
+      } catch (error) {
         if (!cancelled) {
+          setViewerError(error instanceof Error ? error.message : "Supabase sync failed");
           setIsLoaded(true);
         }
       }
@@ -113,10 +260,10 @@ export function FishingTravelPlannerApp() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [activeTripMapId, authUser, guestMode, sharedSlug, supabase, supabaseEnabled]);
 
   useEffect(() => {
-    if (!isLoaded) {
+    if (!isLoaded || supabaseEnabled) {
       return;
     }
 
@@ -127,7 +274,7 @@ export function FishingTravelPlannerApp() {
     } catch {
       return;
     }
-  }, [destinations, isLoaded]);
+  }, [destinations, isLoaded, supabaseEnabled]);
 
   useEffect(() => {
     if (!isLoaded) {
@@ -136,6 +283,53 @@ export function FishingTravelPlannerApp() {
 
     window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
   }, [isLoaded, language]);
+
+  useEffect(() => {
+    if (
+      !supabaseEnabled ||
+      !supabase ||
+      !authUser ||
+      !currentTripMap ||
+      !isLoaded ||
+      sharedSlug
+    ) {
+      return;
+    }
+
+    if (skipRemoteSyncRef.current) {
+      skipRemoteSyncRef.current = false;
+      return;
+    }
+
+    let cancelled = false;
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        const syncedDestinations = await saveTripMapSnapshot(supabase, {
+          destinations,
+          tripMap: currentTripMap,
+          user: authUser
+        });
+
+        if (cancelled) {
+          return;
+        }
+
+        if (JSON.stringify(syncedDestinations) !== JSON.stringify(destinations)) {
+          skipRemoteSyncRef.current = true;
+          setDestinations(syncedDestinations);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setViewerError(error instanceof Error ? error.message : "Saving to Supabase failed");
+        }
+      }
+    }, 180);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [authUser, currentTripMap, destinations, isLoaded, sharedSlug, supabase, supabaseEnabled]);
 
   useEffect(() => {
     if (selectedId && !destinations.some((destination) => destination.id === selectedId)) {
@@ -208,6 +402,103 @@ export function FishingTravelPlannerApp() {
   const activeWaterTheme =
     WATER_TYPE_META[(draftDestination?.waterType || selectedDestination?.waterType || "saltwater")];
 
+  async function handleSignIn(email: string, password: string) {
+    if (!supabase) {
+      return;
+    }
+
+    setAuthBusy(true);
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    setAuthBusy(false);
+
+    if (error) {
+      throw error;
+    }
+  }
+
+  async function handleSignUp(email: string, password: string) {
+    if (!supabase) {
+      return;
+    }
+
+    setAuthBusy(true);
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password
+    });
+    setAuthBusy(false);
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data.session) {
+      throw new Error("Account created. Check your email for confirmation, then sign in.");
+    }
+  }
+
+  async function handleSignOut() {
+    if (!supabase) {
+      return;
+    }
+
+    await supabase.auth.signOut();
+    setAuthUser(null);
+    setSelectedId(null);
+    setDraftDestination(null);
+    setFormMode(null);
+    setTransportDraft(null);
+  }
+
+  async function handleCreateTripMap(title: string) {
+    if (!supabase || !authUser) {
+      return;
+    }
+
+    const nextTripMap = await createTripMap(supabase, authUser.id, title);
+    setTripMaps((current) => [nextTripMap, ...current]);
+    setActiveTripMapId(nextTripMap.id);
+    skipRemoteSyncRef.current = true;
+    setDestinations([]);
+  }
+
+  async function handleTogglePublic(isPublic: boolean) {
+    if (!supabase || !currentTripMap) {
+      return;
+    }
+
+    await setTripMapPublicState(supabase, currentTripMap.id, isPublic);
+    setTripMaps((current) =>
+      current.map((tripMap) =>
+        tripMap.id === currentTripMap.id
+          ? {
+              ...tripMap,
+              isPublic
+            }
+          : tripMap
+      )
+    );
+  }
+
+  async function handleCopyShareLink() {
+    if (!currentTripMap) {
+      return;
+    }
+
+    if (!currentTripMap.isPublic) {
+      await handleTogglePublic(true);
+    }
+
+    await navigator.clipboard.writeText(
+      new URL(`/share/${currentTripMap.shareSlug}`, window.location.origin).toString()
+    );
+  }
+
   function handleToggleFilter(status: DestinationStatus) {
     setActiveFilters((current) => {
       if (current.includes(status)) {
@@ -241,6 +532,10 @@ export function FishingTravelPlannerApp() {
   }
 
   function handleStartAdd() {
+    if (!canEdit) {
+      return;
+    }
+
     startTransition(() => {
       setSelectedId(null);
       setFormMode("add");
@@ -257,6 +552,10 @@ export function FishingTravelPlannerApp() {
   }
 
   function handleAddStopToExpedition() {
+    if (!canEdit) {
+      return;
+    }
+
     if (!selectedExpedition) {
       handleStartAdd();
       return;
@@ -301,7 +600,7 @@ export function FishingTravelPlannerApp() {
   }
 
   async function handleMapPlacement(nextCoordinates: { lat: number; lng: number }) {
-    if (!formMode || !draftDestination || !mapPickMode) {
+    if (!canEdit || !formMode || !draftDestination || !mapPickMode) {
       return;
     }
 
@@ -342,7 +641,7 @@ export function FishingTravelPlannerApp() {
   }
 
   function handleEditSelected() {
-    if (!selectedDestination) {
+    if (!canEdit || !selectedDestination) {
       return;
     }
 
@@ -364,6 +663,10 @@ export function FishingTravelPlannerApp() {
   }
 
   function handleEditTransport(destinationId: string) {
+    if (!canEdit) {
+      return;
+    }
+
     const destination = destinations.find((item) => item.id === destinationId);
 
     if (!destination || (destination.stopOrder ?? 1) <= 1) {
@@ -402,7 +705,7 @@ export function FishingTravelPlannerApp() {
   }
 
   function handleSaveTransport() {
-    if (!transportDraft) {
+    if (!canEdit || !transportDraft) {
       return;
     }
 
@@ -425,7 +728,7 @@ export function FishingTravelPlannerApp() {
   }
 
   function handleSaveDraft() {
-    if (!draftDestination) {
+    if (!canEdit || !draftDestination) {
       return;
     }
 
@@ -495,6 +798,10 @@ export function FishingTravelPlannerApp() {
   }
 
   function handleDeleteDestination(destinationId: string) {
+    if (!canEdit) {
+      return;
+    }
+
     setDestinations((current) => deleteDestinationFromList(current, destinationId));
 
     startTransition(() => {
@@ -514,6 +821,10 @@ export function FishingTravelPlannerApp() {
   }
 
   function handleDeleteExpedition(expeditionId: string) {
+    if (!canEdit) {
+      return;
+    }
+
     setDestinations((current) =>
       current.filter((destination) => destination.expeditionId !== expeditionId)
     );
@@ -555,90 +866,130 @@ export function FishingTravelPlannerApp() {
     }
   }
 
+  const authSlot = supabaseEnabled ? (
+    <AccountControls
+      currentTripMap={currentTripMap}
+      guestMode={guestMode || Boolean(sharedSlug)}
+      onCopyShareLink={handleCopyShareLink}
+      onCreateTripMap={handleCreateTripMap}
+      onOpenAuth={() => {
+        setGuestMode(false);
+        setAuthDialogOpen(true);
+      }}
+      onSelectTripMap={setActiveTripMapId}
+      onSignOut={handleSignOut}
+      onTogglePublic={handleTogglePublic}
+      tripMaps={tripMaps}
+      userEmail={authUser?.email ?? null}
+    />
+  ) : null;
+
   return (
     <LanguageProvider language={language} setLanguage={setLanguage}>
       <main className="relative min-h-screen overflow-hidden">
-      <WorldMap
-        addMode={Boolean(formMode && mapPickMode)}
-        destinations={mapDestinations}
-        draftCoordinates={
-          formMode && draftDestination
-            ? {
-                lat: draftDestination.lat,
-                lng: draftDestination.lng
-              }
-            : null
-        }
-        leftPanelCollapsed={timelineCollapsed}
-        rightPanelCollapsed={detailsCollapsed}
-        selectedExpedition={selectedExpedition}
-        focusTarget={focusTarget}
-        onEditTransport={handleEditTransport}
-        onMapPlace={handleMapPlacement}
-        onSelectDestination={handleSelectDestination}
-        searchPanelCollapsed={searchCollapsed}
-        selectedId={selectedId}
-      />
+        <WorldMap
+          addMode={Boolean(formMode && mapPickMode && canEdit)}
+          canEdit={canEdit}
+          destinations={mapDestinations}
+          draftCoordinates={
+            formMode && draftDestination
+              ? {
+                  lat: draftDestination.lat,
+                  lng: draftDestination.lng
+                }
+              : null
+          }
+          focusTarget={focusTarget}
+          leftPanelCollapsed={timelineCollapsed}
+          onEditTransport={handleEditTransport}
+          onMapPlace={handleMapPlacement}
+          onSelectDestination={handleSelectDestination}
+          rightPanelCollapsed={detailsCollapsed}
+          searchPanelCollapsed={searchCollapsed}
+          selectedExpedition={selectedExpedition}
+          selectedId={selectedId}
+        />
 
-      <div className={cn("pointer-events-none absolute inset-0", activeWaterTheme.haloClassName)} />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(215,170,90,0.08),transparent_28%)]" />
+        <div className={cn("pointer-events-none absolute inset-0", activeWaterTheme.haloClassName)} />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(215,170,90,0.08),transparent_28%)]" />
 
-      <MapToolbar
-        activeFilters={activeFilters}
-        addMode={formMode === "add"}
-        isBusy={isPending}
-        manualPinMode={Boolean(formMode && mapPickMode)}
-        onAddDestination={handleStartAdd}
-        onLanguageChange={setLanguage}
-        onSearchChange={setSearchQuery}
-        onSearchPanelCollapsedChange={handleSetSearchCollapsed}
-        onToggleFilter={handleToggleFilter}
-        searchQuery={searchQuery}
-        searchPanelCollapsed={searchCollapsed}
-        statusCounts={statusCounts}
-        language={language}
-      />
+        <MapToolbar
+          activeFilters={activeFilters}
+          addMode={formMode === "add"}
+          authSlot={authSlot}
+          canEdit={canEdit}
+          isBusy={isPending || authBusy}
+          language={language}
+          manualPinMode={Boolean(formMode && mapPickMode)}
+          onAddDestination={handleStartAdd}
+          onLanguageChange={setLanguage}
+          onSearchChange={setSearchQuery}
+          onSearchPanelCollapsedChange={handleSetSearchCollapsed}
+          onToggleFilter={handleToggleFilter}
+          searchPanelCollapsed={searchCollapsed}
+          searchQuery={searchQuery}
+          statusCounts={statusCounts}
+        />
 
-      <DestinationPanel
-        addMode={formMode === "add"}
-        detailsCollapsed={detailsCollapsed}
-        draftDestination={draftDestination}
-        expeditionSuggestions={expeditionSuggestions}
-        filteredDestinations={filteredDestinations}
-        formMode={formMode}
-        isResolvingLocation={isResolvingLocation}
-        mapPickMode={mapPickMode}
-        onDeleteDestination={handleDeleteDestination}
-        onDeleteExpedition={handleDeleteExpedition}
-        selectedExpeditionId={selectedExpeditionId}
-        setDetailsCollapsed={handleSetDetailsCollapsed}
-        setTimelineCollapsed={handleSetTimelineCollapsed}
-        timelineCollapsed={timelineCollapsed}
-        timelineSections={timelineSections}
-        mode={panelMode}
-        onAddStopToExpedition={handleAddStopToExpedition}
-        onCancelForm={handleCancelForm}
-        onDraftChange={setDraftDestination}
-        onDisableMapPick={() => setMapPickMode(false)}
-        onEditSelected={handleEditSelected}
-        onEditTransport={handleEditTransport}
-        onEnableMapPick={() => setMapPickMode(true)}
-        onSaveDraft={handleSaveDraft}
-        onSaveTransport={handleSaveTransport}
-        onSelectDestination={handleSelectDestination}
-        onShowOverview={() => setSelectedId(null)}
-        searchQuery={searchQuery}
-        selectedExpedition={selectedExpedition}
-        selectedDestination={selectedDestination}
-        statusCounts={statusCounts}
-        transportTarget={transportTarget}
-        transportDraft={transportDraft}
-        onTransportChange={handleTransportChange}
-      />
+        <DestinationPanel
+          addMode={formMode === "add"}
+          canEdit={canEdit}
+          detailsCollapsed={detailsCollapsed}
+          draftDestination={draftDestination}
+          expeditionSuggestions={expeditionSuggestions}
+          filteredDestinations={filteredDestinations}
+          formMode={formMode}
+          isResolvingLocation={isResolvingLocation}
+          mapPickMode={mapPickMode}
+          mode={panelMode}
+          onAddStopToExpedition={handleAddStopToExpedition}
+          onCancelForm={handleCancelForm}
+          onDeleteDestination={handleDeleteDestination}
+          onDeleteExpedition={handleDeleteExpedition}
+          onDraftChange={setDraftDestination}
+          onDisableMapPick={() => setMapPickMode(false)}
+          onEditSelected={handleEditSelected}
+          onEditTransport={handleEditTransport}
+          onEnableMapPick={() => setMapPickMode(true)}
+          onSaveDraft={handleSaveDraft}
+          onSaveTransport={handleSaveTransport}
+          onSelectDestination={handleSelectDestination}
+          onShowOverview={() => setSelectedId(null)}
+          onTransportChange={handleTransportChange}
+          searchQuery={searchQuery}
+          selectedDestination={selectedDestination}
+          selectedExpedition={selectedExpedition}
+          selectedExpeditionId={selectedExpeditionId}
+          setDetailsCollapsed={handleSetDetailsCollapsed}
+          setTimelineCollapsed={handleSetTimelineCollapsed}
+          statusCounts={statusCounts}
+          timelineCollapsed={timelineCollapsed}
+          timelineSections={timelineSections}
+          transportDraft={transportDraft}
+          transportTarget={transportTarget}
+        />
 
-      <div className="pointer-events-none absolute bottom-4 left-4 z-10 hidden rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs uppercase tracking-[0.25em] text-white/45 backdrop-blur-md md:block">
-        {language === "zh" ? "沉浸式远征地图 · 本地优先 MVP" : "Immersive expedition atlas · local-first MVP"}
-      </div>
+        {viewerError ? (
+          <div className="pointer-events-none absolute bottom-4 right-4 z-30 rounded-2xl border border-red-400/20 bg-[#221011]/94 px-4 py-3 text-sm text-red-100 shadow-panel backdrop-blur-xl">
+            {viewerError}
+          </div>
+        ) : null}
+
+        <div className="pointer-events-none absolute bottom-4 left-4 z-10 hidden rounded-full border border-white/10 bg-black/30 px-4 py-2 text-xs uppercase tracking-[0.25em] text-white/45 backdrop-blur-md md:block">
+          {language === "zh" ? "沉浸式远征地图 · 本地优先 MVP" : "Immersive expedition atlas · local-first MVP"}
+        </div>
+
+        {shouldShowAuthGate ? (
+          <AuthGate
+            busy={authBusy}
+            onContinueAsGuest={() => {
+              setGuestMode(true);
+              setAuthDialogOpen(false);
+            }}
+            onSignIn={handleSignIn}
+            onSignUp={handleSignUp}
+          />
+        ) : null}
       </main>
     </LanguageProvider>
   );

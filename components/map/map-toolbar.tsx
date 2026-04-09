@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { ChevronLeft, ChevronRight, Plus, Search, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -11,6 +13,8 @@ import { STATUS_META, cn } from "@/lib/utils";
 type MapToolbarProps = {
   activeFilters: DestinationStatus[];
   addMode: boolean;
+  authSlot?: ReactNode;
+  canEdit: boolean;
   isBusy: boolean;
   language: Language;
   manualPinMode: boolean;
@@ -27,6 +31,8 @@ type MapToolbarProps = {
 export function MapToolbar({
   activeFilters,
   addMode,
+  authSlot,
+  canEdit,
   isBusy,
   language,
   manualPinMode,
@@ -125,7 +131,9 @@ export function MapToolbar({
 
             {filters}
 
-            <Button className="w-full justify-center md:w-auto" onClick={onAddDestination} variant={addMode ? "accent" : "primary"}>
+            {authSlot}
+
+            <Button className="w-full justify-center md:w-auto" disabled={!canEdit} onClick={onAddDestination} variant={addMode ? "accent" : "primary"}>
               <Plus className="size-4" />
               {addMode
                 ? t("toolbar.placingDestination")
@@ -155,6 +163,7 @@ export function MapToolbar({
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
+              {authSlot}
               <div className="flex rounded-full border border-white/8 bg-[#06120a]/96 p-1">
                 <button
                   className={cn(
@@ -178,7 +187,7 @@ export function MapToolbar({
                 </button>
               </div>
 
-              <Button className="h-11 shrink-0 rounded-2xl px-4" onClick={onAddDestination} variant={addMode ? "accent" : "primary"}>
+              <Button className="h-11 shrink-0 rounded-2xl px-4" disabled={!canEdit} onClick={onAddDestination} variant={addMode ? "accent" : "primary"}>
                 <Plus className="size-4" />
                 <span className="sr-only">
                   {addMode

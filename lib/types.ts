@@ -8,6 +8,7 @@ export type PhotoItem = {
   url: string;
   caption?: string;
   alt?: string;
+  storagePath?: string | null;
 };
 
 export type TransportSegment = {
@@ -93,4 +94,14 @@ export type LocationSuggestion = {
   lat: number;
   lng: number;
   source: "maptiler" | "nominatim";
+};
+
+export type TripMap = {
+  id: string;
+  ownerUserId: string;
+  title: string;
+  shareSlug: string;
+  isPublic: boolean;
+  createdAt: string;
+  updatedAt: string;
 };
