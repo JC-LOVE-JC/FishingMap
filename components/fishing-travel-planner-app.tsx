@@ -16,6 +16,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import {
   createTripMap,
+  deleteTripMap,
   ensureOwnedTripMap,
   loadOwnedTripMapSnapshot,
   loadSharedTripMapSnapshot,
@@ -515,6 +516,34 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
     setDestinations([]);
   }
 
+  async function handleDeleteTripMap() {
+    if (!supabase || !authUser || !currentTripMap) {
+      return;
+    }
+
+    await deleteTripMap(supabase, currentTripMap.id);
+
+    const remainingTripMaps = tripMaps.filter((tripMap) => tripMap.id !== currentTripMap.id);
+    setTripMaps(remainingTripMaps);
+    setSelectedId(null);
+    setDraftDestination(null);
+    setFormMode(null);
+    setTransportDraft(null);
+
+    if (remainingTripMaps.length > 0) {
+      setActiveTripMapId(remainingTripMaps[0].id);
+      skipRemoteSyncRef.current = true;
+      setDestinations([]);
+      return;
+    }
+
+    const fallbackTripMap = await createTripMap(supabase, authUser.id, "My Fishing Atlas");
+    setTripMaps([fallbackTripMap]);
+    setActiveTripMapId(fallbackTripMap.id);
+    skipRemoteSyncRef.current = true;
+    setDestinations([]);
+  }
+
   async function handleTogglePublic(isPublic: boolean) {
     if (!supabase || !currentTripMap) {
       return;
@@ -961,6 +990,7 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
       guestMode={guestMode || Boolean(sharedSlug)}
       onCopyShareLink={handleCopyShareLink}
       onCreateTripMap={handleCreateTripMap}
+      onDeleteTripMap={handleDeleteTripMap}
       onOpenAuth={() => {
         setGuestMode(false);
         setAuthDialogOpen(true);

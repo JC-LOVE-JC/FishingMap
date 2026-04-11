@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { Copy, LogOut, Plus, UserRound } from "lucide-react";
+import { Copy, LogOut, Plus, Trash2, UserRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ type AccountControlsProps = {
   guestMode: boolean;
   onCreateTripMap: (title: string) => Promise<void>;
   onCopyShareLink: () => Promise<void>;
+  onDeleteTripMap: () => Promise<void>;
   onOpenAuth: () => void;
   onSelectTripMap: (tripMapId: string) => void;
   onSignOut: () => Promise<void>;
@@ -26,6 +27,7 @@ export function AccountControls({
   guestMode,
   onCreateTripMap,
   onCopyShareLink,
+  onDeleteTripMap,
   onOpenAuth,
   onSelectTripMap,
   onSignOut,
@@ -107,6 +109,17 @@ export function AccountControls({
           <Button className="w-full justify-center" onClick={() => void onCopyShareLink()} type="button" variant="secondary">
             <Copy className="size-4" />
             Copy Share Link
+          </Button>
+
+          <Button
+            className="w-full justify-center"
+            disabled={!currentTripMap}
+            onClick={() => void onDeleteTripMap()}
+            type="button"
+            variant="ghost"
+          >
+            <Trash2 className="size-4" />
+            Delete Current Map
           </Button>
 
           <Button className="w-full justify-center" onClick={() => void onSignOut()} type="button" variant="ghost">

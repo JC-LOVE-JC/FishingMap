@@ -96,6 +96,25 @@ export async function createTripMap(supabase: SupabaseClient, userId: string, ti
   return mapTripMapRow(data);
 }
 
+export async function deleteTripMap(supabase: SupabaseClient, tripMapId: string) {
+  const destinations = await fetchDestinationRows(supabase, tripMapId);
+  const images = await fetchDestinationImages(
+    supabase,
+    destinations.map((destination) => destination.id)
+  );
+
+  await removeStoredImages(supabase, images);
+
+  const { error } = await supabase
+    .from("trip_maps")
+    .delete()
+    .eq("id", tripMapId);
+
+  if (error) {
+    throw error;
+  }
+}
+
 export async function ensureOwnedTripMap(supabase: SupabaseClient, user: User) {
   const maps = await listOwnedTripMaps(supabase, user.id);
 
@@ -509,7 +528,12 @@ async function uploadDataUrlPhoto(
   }
 ) {
   const { contentType, extension, file } = dataUrlToFile(dataUrl);
-  const storagePath = `${userId}/${tripMapId}/${destinationId}/${photoId}.${extension}`;
+  const storagePath = [
+    `user-${userId}`,
+    `map-${tripMapId}`,
+    `destination-${destinationId}`,
+    `photo-${photoId}.${extension}`
+  ].join("/");
 
   const { error } = await supabase.storage.from(SUPABASE_BUCKET).upload(storagePath, file, {
     contentType,
