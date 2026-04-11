@@ -161,7 +161,7 @@ for insert
 to authenticated
 with check (
   bucket_id = 'destination-images'
-  and (storage.foldername(name))[1] = auth.uid()::text
+  and regexp_replace((storage.foldername(name))[1], '^user-', '') = auth.uid()::text
 );
 
 drop policy if exists "destination image update by owner" on storage.objects;
@@ -171,11 +171,11 @@ for update
 to authenticated
 using (
   bucket_id = 'destination-images'
-  and (storage.foldername(name))[1] = auth.uid()::text
+  and regexp_replace((storage.foldername(name))[1], '^user-', '') = auth.uid()::text
 )
 with check (
   bucket_id = 'destination-images'
-  and (storage.foldername(name))[1] = auth.uid()::text
+  and regexp_replace((storage.foldername(name))[1], '^user-', '') = auth.uid()::text
 );
 
 drop policy if exists "destination image delete by owner" on storage.objects;
@@ -185,7 +185,7 @@ for delete
 to authenticated
 using (
   bucket_id = 'destination-images'
-  and (storage.foldername(name))[1] = auth.uid()::text
+  and regexp_replace((storage.foldername(name))[1], '^user-', '') = auth.uid()::text
 );
 
 drop policy if exists "destination image read public" on storage.objects;
