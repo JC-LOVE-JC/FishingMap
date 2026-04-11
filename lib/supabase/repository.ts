@@ -529,7 +529,7 @@ async function uploadDataUrlPhoto(
 ) {
   const { contentType, extension, file } = dataUrlToFile(dataUrl);
   const storagePath = [
-    `user-${userId}`,
+    userId,
     `map-${tripMapId}`,
     `destination-${destinationId}`,
     `photo-${photoId}.${extension}`
