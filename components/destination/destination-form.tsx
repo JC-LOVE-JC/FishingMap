@@ -59,6 +59,7 @@ export function DestinationForm({
   const [locationQuery, setLocationQuery] = useState(buildLocationQuery(value));
   const [locationResults, setLocationResults] = useState<LocationSuggestion[]>([]);
   const [isSearchingLocations, setIsSearchingLocations] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const normalizedExpeditionQuery = (value.expeditionName || "").trim().toLowerCase();
   const filteredExpeditionSuggestions =
     normalizedExpeditionQuery.length >= 1
@@ -198,28 +199,19 @@ export function DestinationForm({
       return;
     }
 
-    const uploadedPhotos = await Promise.all(
-      files.map(
-        (file) =>
-          new Promise<PhotoItem>((resolve, reject) => {
-            const reader = new FileReader();
+    setUploadError(null);
 
-            reader.onload = () => {
-              if (typeof reader.result !== "string") {
-                reject(new Error("Unsupported file type"));
-                return;
-              }
+    try {
+      const uploadedPhotos = await Promise.all(files.map((file) => convertUploadToCompatiblePhoto(file)));
+      updateField("photos", [...value.photos, ...uploadedPhotos]);
+    } catch (error) {
+      setUploadError(
+        error instanceof Error
+          ? error.message
+          : "Image upload failed. Please use JPG, PNG, WebP, AVIF, or GIF."
+      );
+    }
 
-              resolve(toPhotoFromDataUrl(file.name, reader.result));
-            };
-
-            reader.onerror = () => reject(reader.error ?? new Error("Upload failed"));
-            reader.readAsDataURL(file);
-          })
-      )
-    );
-
-    updateField("photos", [...value.photos, ...uploadedPhotos]);
     event.target.value = "";
   }
 
@@ -786,7 +778,7 @@ export function DestinationForm({
               <UploadCloud className="size-4" />
               {t("form.upload")}
               <input
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
                 className="hidden"
                 multiple
                 onChange={handleImageUpload}
@@ -801,6 +793,12 @@ export function DestinationForm({
         </div>
 
         <div className="space-y-3">
+          {uploadError ? (
+            <div className="rounded-[22px] border border-red-300/16 bg-red-500/8 px-4 py-3 text-sm text-red-100/90">
+              {uploadError}
+            </div>
+          ) : null}
+
           {value.photos.length === 0 ? (
             <div className="rounded-[22px] border border-dashed border-white/12 bg-white/4 p-5 text-sm text-white/52">
               {t("form.emptyGallery")}
@@ -861,6 +859,90 @@ export function DestinationForm({
     </form>
   );
 }
+
+async function convertUploadToCompatiblePhoto(file: File): Promise<PhotoItem> {
+  if (file.type === "image/gif") {
+    return await readFileAsDataPhoto(file);
+  }
+
+  if (!SUPPORTED_BROWSER_IMAGE_TYPES.has(file.type)) {
+    throw new Error("This image format is not supported yet. Please use JPG, PNG, WebP, AVIF, or GIF.");
+  }
+
+  try {
+    const dataUrl = await convertFileToJpegDataUrl(file);
+    const normalizedName = file.name.replace(/\.[^.]+$/, "") || "upload";
+    return toPhotoFromDataUrl(`${normalizedName}.jpg`, dataUrl);
+  } catch {
+    throw new Error("This image could not be processed. Please try a JPG, PNG, or WebP file.");
+  }
+}
+
+async function readFileAsDataPhoto(file: File) {
+  return await new Promise<PhotoItem>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result !== "string") {
+        reject(new Error("Unsupported file type"));
+        return;
+      }
+
+      resolve(toPhotoFromDataUrl(file.name, reader.result));
+    };
+
+    reader.onerror = () => reject(reader.error ?? new Error("Upload failed"));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function convertFileToJpegDataUrl(file: File) {
+  const sourceUrl = URL.createObjectURL(file);
+
+  try {
+    const image = await loadImage(sourceUrl);
+    const maxEdge = 2400;
+    const ratio = Math.min(1, maxEdge / Math.max(image.naturalWidth, image.naturalHeight));
+    const width = Math.max(1, Math.round(image.naturalWidth * ratio));
+    const height = Math.max(1, Math.round(image.naturalHeight * ratio));
+    const canvas = document.createElement("canvas");
+
+    canvas.width = width;
+    canvas.height = height;
+
+    const context = canvas.getContext("2d");
+
+    if (!context) {
+      throw new Error("Canvas not available");
+    }
+
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, width, height);
+    context.drawImage(image, 0, 0, width, height);
+
+    return canvas.toDataURL("image/jpeg", 0.9);
+  } finally {
+    URL.revokeObjectURL(sourceUrl);
+  }
+}
+
+function loadImage(sourceUrl: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Image decode failed"));
+    image.src = sourceUrl;
+  });
+}
+
+const SUPPORTED_BROWSER_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/avif"
+]);
 
 function buildLocationQuery(value: Destination) {
   return [value.city, value.region, value.country].filter(Boolean).join(", ");

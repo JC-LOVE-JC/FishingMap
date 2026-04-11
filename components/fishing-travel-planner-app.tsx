@@ -76,6 +76,7 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [tripMaps, setTripMaps] = useState<TripMap[]>([]);
   const [activeTripMapId, setActiveTripMapId] = useState<string | null>(null);
+  const [loadedTripMapId, setLoadedTripMapId] = useState<string | null>(null);
   const [viewerError, setViewerError] = useState<string | null>(null);
   const [autoFocusExpeditionId, setAutoFocusExpeditionId] = useState<string | null>(null);
   const deferredSearch = useDeferredValue(searchQuery);
@@ -190,6 +191,7 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
           }
         } finally {
           if (!cancelled) {
+            setLoadedTripMapId("local");
             setIsLoaded(true);
           }
         }
@@ -218,6 +220,7 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
           setTripMaps(snapshot ? [snapshot.tripMap] : []);
           setActiveTripMapId(snapshot?.tripMap.id ?? null);
           setDestinations(snapshot?.destinations ?? []);
+          setLoadedTripMapId(snapshot?.tripMap.id ?? null);
           setIsLoaded(true);
           return;
         }
@@ -237,6 +240,7 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
 
           if (!nextTripMapId) {
             setDestinations([]);
+            setLoadedTripMapId(null);
             setIsLoaded(true);
             return;
           }
@@ -244,6 +248,8 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
           if (nextTripMapId !== activeTripMapId) {
             setActiveTripMapId(nextTripMapId);
           }
+
+          setLoadedTripMapId(null);
 
           const snapshot = await loadOwnedTripMapSnapshot(supabase, authUser.id, nextTripMapId);
 
@@ -253,6 +259,7 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
 
           skipRemoteSyncRef.current = true;
           setDestinations(snapshot?.destinations ?? []);
+          setLoadedTripMapId(nextTripMapId);
           setIsLoaded(true);
           return;
         }
@@ -261,6 +268,7 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
           setTripMaps([]);
           setActiveTripMapId(null);
           setDestinations([]);
+          setLoadedTripMapId(null);
           setIsLoaded(true);
           return;
         }
@@ -268,6 +276,7 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
         setTripMaps([]);
         setActiveTripMapId(null);
         setDestinations([]);
+        setLoadedTripMapId(null);
         setIsLoaded(true);
       } catch (error) {
         if (!cancelled) {
@@ -310,6 +319,7 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
       !supabase ||
       !authUser ||
       !currentTripMap ||
+      loadedTripMapId !== currentTripMap.id ||
       !isLoaded ||
       sharedSlug
     ) {
@@ -349,7 +359,7 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
       cancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [authUser, currentTripMap, destinations, isLoaded, sharedSlug, supabase, supabaseEnabled]);
+  }, [authUser, currentTripMap, destinations, isLoaded, loadedTripMapId, sharedSlug, supabase, supabaseEnabled]);
 
   useEffect(() => {
     if (selectedId && !destinations.some((destination) => destination.id === selectedId)) {
@@ -512,6 +522,11 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
     const nextTripMap = await createTripMap(supabase, authUser.id, title);
     setTripMaps((current) => [nextTripMap, ...current]);
     setActiveTripMapId(nextTripMap.id);
+    setLoadedTripMapId(null);
+    setSelectedId(null);
+    setDraftDestination(null);
+    setFormMode(null);
+    setTransportDraft(null);
     skipRemoteSyncRef.current = true;
     setDestinations([]);
   }
@@ -525,6 +540,7 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
 
     const remainingTripMaps = tripMaps.filter((tripMap) => tripMap.id !== currentTripMap.id);
     setTripMaps(remainingTripMaps);
+    setLoadedTripMapId(null);
     setSelectedId(null);
     setDraftDestination(null);
     setFormMode(null);
@@ -540,6 +556,23 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
     const fallbackTripMap = await createTripMap(supabase, authUser.id, "My Fishing Atlas");
     setTripMaps([fallbackTripMap]);
     setActiveTripMapId(fallbackTripMap.id);
+    setLoadedTripMapId(null);
+    skipRemoteSyncRef.current = true;
+    setDestinations([]);
+  }
+
+  function handleSelectTripMap(tripMapId: string) {
+    if (tripMapId === activeTripMapId) {
+      return;
+    }
+
+    setActiveTripMapId(tripMapId);
+    setLoadedTripMapId(null);
+    setSelectedId(null);
+    setDraftDestination(null);
+    setFormMode(null);
+    setTransportDraft(null);
+    setViewerError(null);
     skipRemoteSyncRef.current = true;
     setDestinations([]);
   }
@@ -995,7 +1028,7 @@ export function FishingTravelPlannerApp({ sharedSlug }: { sharedSlug?: string })
         setGuestMode(false);
         setAuthDialogOpen(true);
       }}
-      onSelectTripMap={setActiveTripMapId}
+      onSelectTripMap={handleSelectTripMap}
       onSignOut={handleSignOut}
       onTogglePublic={handleTogglePublic}
       tripMaps={tripMaps}
