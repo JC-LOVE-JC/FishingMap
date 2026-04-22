@@ -45,6 +45,9 @@ type TranslationKey =
   | "overview.techniques"
   | "overview.tags"
   | "overview.guideBoatInformation"
+  | "overview.onBoardingPoint"
+  | "overview.pointName"
+  | "overview.openGoogleMaps"
   | "overview.guide"
   | "overview.guideName"
   | "overview.contact"
@@ -231,6 +234,9 @@ const translations: Record<Language, TranslationDictionary> = {
     "overview.techniques": "Techniques",
     "overview.tags": "Tags",
     "overview.guideBoatInformation": "Guide & Boat Information",
+    "overview.onBoardingPoint": "On Boarding Point",
+    "overview.pointName": "Point Name",
+    "overview.openGoogleMaps": "Open in Google Maps",
     "overview.guide": "Guide",
     "overview.guideName": "Name",
     "overview.contact": "Contact",
@@ -413,6 +419,9 @@ const translations: Record<Language, TranslationDictionary> = {
     "overview.techniques": "钓法",
     "overview.tags": "标签",
     "overview.guideBoatInformation": "向导与船只信息",
+    "overview.onBoardingPoint": "上船点",
+    "overview.pointName": "点位名称",
+    "overview.openGoogleMaps": "在 Google 地图中打开",
     "overview.guide": "向导",
     "overview.guideName": "姓名",
     "overview.contact": "联系方式",

@@ -3,7 +3,7 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 
 import { SUPABASE_BUCKET } from "@/lib/supabase/env";
-import type { BoatInfo, Destination, GuideInfo, PhotoItem, TripMap } from "@/lib/types";
+import type { BoardingPoint, BoatInfo, Destination, GuideInfo, PhotoItem, TripMap } from "@/lib/types";
 import { normalizeDestination } from "@/lib/utils";
 
 type TripMapRow = {
@@ -42,6 +42,7 @@ type DestinationRow = {
   tags: string[] | null;
   guide_info: GuideInfo | null;
   boat_info: BoatInfo | null;
+  boarding_point: BoardingPoint | null;
   rating: number | null;
   featured: boolean | null;
   created_at: string;
@@ -326,6 +327,7 @@ async function loadTripMapSnapshotByRow(supabase: SupabaseClient, row: TripMapRo
         tags: destination.tags ?? [],
         guideInfo: destination.guide_info ?? undefined,
         boatInfo: destination.boat_info ?? undefined,
+        boardingPoint: destination.boarding_point ?? undefined,
         photos: (photosByDestination.get(destination.id) ?? []).map(mapImageRowToPhoto),
         rating: destination.rating ?? undefined,
         featured: destination.featured ?? undefined,
@@ -397,6 +399,7 @@ function mapDestinationToRow(destination: Destination, tripMapId: string): Desti
     tags: destination.tags,
     guide_info: destination.guideInfo ?? null,
     boat_info: destination.boatInfo ?? null,
+    boarding_point: destination.boardingPoint ?? null,
     rating: destination.rating ?? null,
     featured: destination.featured ?? false,
     created_at: destination.createdAt,

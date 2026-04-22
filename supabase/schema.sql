@@ -36,11 +36,15 @@ create table if not exists public.destinations (
   tags text[] not null default '{}',
   guide_info jsonb null,
   boat_info jsonb null,
+  boarding_point jsonb null,
   rating integer null,
   featured boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.destinations
+  add column if not exists boarding_point jsonb null;
 
 create index if not exists destinations_trip_map_id_idx on public.destinations (trip_map_id);
 create index if not exists destinations_expedition_id_idx on public.destinations (expedition_id);

@@ -10,6 +10,7 @@ import {
   ChevronRight,
   ChevronUp,
   Edit3,
+  ExternalLink,
   MapPinned,
   Sparkles,
   Trash2,
@@ -35,6 +36,7 @@ import type {
 import {
   STATUS_META,
   WATER_TYPE_META,
+  buildGoogleMapsPointUrl,
   cn,
   formatDateRange,
   formatLocation,
@@ -135,6 +137,13 @@ export function DestinationPanel({
       ? selectedExpedition.destinations.find(
           (destination) => (destination.stopOrder ?? 1) === (transportTarget.stopOrder ?? 1) - 1
         ) ?? null
+      : null;
+  const boardingPoint = selectedDestination?.boardingPoint;
+  const boardingGoogleMapsUrl =
+    boardingPoint &&
+    typeof boardingPoint.lat === "number" &&
+    typeof boardingPoint.lng === "number"
+      ? buildGoogleMapsPointUrl(boardingPoint.lat, boardingPoint.lng)
       : null;
   const mobilePanelHeightClass =
     mode === "transport"
@@ -469,6 +478,37 @@ export function DestinationPanel({
                   </summary>
 
                   <div className="grid gap-5 border-t border-white/8 px-5 pb-5 pt-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="eyebrow text-white/52">{t("overview.onBoardingPoint")}</p>
+                        {boardingGoogleMapsUrl ? (
+                          <a
+                            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[0.68rem] uppercase tracking-[0.18em] text-white/74 transition hover:bg-white/8 hover:text-white"
+                            href={boardingGoogleMapsUrl}
+                            rel="noreferrer"
+                            target="_blank"
+                          >
+                            {t("overview.openGoogleMaps")}
+                            <ExternalLink className="size-3.5" />
+                          </a>
+                        ) : null}
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <SpecRow
+                          label={t("overview.pointName")}
+                          value={boardingPoint?.name || ""}
+                        />
+                        <SpecRow
+                          label={t("overview.coordinates")}
+                          value={
+                            typeof boardingPoint?.lat === "number" && typeof boardingPoint?.lng === "number"
+                              ? `${boardingPoint.lat.toFixed(4)}, ${boardingPoint.lng.toFixed(4)}`
+                              : ""
+                          }
+                        />
+                      </div>
+                    </div>
+
                     <div className="space-y-3">
                       <p className="eyebrow text-white/52">{t("overview.guide")}</p>
                       <div className="grid gap-3 sm:grid-cols-2">

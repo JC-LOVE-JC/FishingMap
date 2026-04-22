@@ -40,6 +40,12 @@ export type BoatInfo = {
   hasToilet?: boolean;
 };
 
+export type BoardingPoint = {
+  name?: string;
+  lat?: number;
+  lng?: number;
+};
+
 export type Destination = {
   id: string;
   title: string;
@@ -65,6 +71,7 @@ export type Destination = {
   tags: string[];
   guideInfo?: GuideInfo;
   boatInfo?: BoatInfo;
+  boardingPoint?: BoardingPoint;
   photos: PhotoItem[];
   rating?: number;
   featured?: boolean;

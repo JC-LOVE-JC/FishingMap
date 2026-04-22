@@ -86,7 +86,11 @@ export function buildWindyUrl(
   waterType: WaterType = "saltwater"
 ) {
   const overlay = waterType === "saltwater" ? "waves" : "wind";
-  return `https://www.windy.com/?${overlay},${lat.toFixed(2)},${lng.toFixed(2)},6`;
+  const latToken = lat.toFixed(4);
+  const lngToken = lng.toFixed(4);
+  const zoom = waterType === "saltwater" ? 8 : 9;
+
+  return `https://www.windy.com/?${overlay},${latToken},${lngToken},${zoom}`;
 }
 
 const WEATHER_CODE_LABELS: Record<number, string> = {

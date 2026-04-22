@@ -151,6 +151,19 @@ export function DestinationForm({
     });
   }
 
+  function updateBoardingField(key: "name" | "lat" | "lng", nextValue: string | number | undefined) {
+    onChange({
+      ...value,
+      boardingPoint: {
+        name: "",
+        lat: undefined,
+        lng: undefined,
+        ...value.boardingPoint,
+        [key]: nextValue
+      }
+    });
+  }
+
   function updateBoatField<Key extends keyof BoatInfo>(key: Key, nextValue: BoatInfo[Key]) {
     onChange({
       ...value,
@@ -643,6 +656,59 @@ export function DestinationForm({
         </summary>
 
         <div className="grid gap-4 border-t border-white/8 px-4 pb-4 pt-4 md:grid-cols-2">
+          <div className="space-y-3 md:col-span-2">
+            <p className="eyebrow text-white/52">{t("overview.onBoardingPoint")}</p>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <label className="eyebrow" htmlFor="boardingPointName">
+                  {t("overview.pointName")}
+                </label>
+                <Input
+                  id="boardingPointName"
+                  onChange={(event) => updateBoardingField("name", event.target.value)}
+                  placeholder={language === "zh" ? "码头 / 集合点" : "Marina / dock / pickup point"}
+                  value={value.boardingPoint?.name || ""}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="eyebrow" htmlFor="boardingPointLat">
+                  {t("form.latitude")}
+                </label>
+                <Input
+                  id="boardingPointLat"
+                  onChange={(event) =>
+                    updateBoardingField(
+                      "lat",
+                      event.target.value === "" ? undefined : Number(event.target.value)
+                    )
+                  }
+                  step="0.0001"
+                  type="number"
+                  value={value.boardingPoint?.lat ?? ""}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="eyebrow" htmlFor="boardingPointLng">
+                  {t("form.longitude")}
+                </label>
+                <Input
+                  id="boardingPointLng"
+                  onChange={(event) =>
+                    updateBoardingField(
+                      "lng",
+                      event.target.value === "" ? undefined : Number(event.target.value)
+                    )
+                  }
+                  step="0.0001"
+                  type="number"
+                  value={value.boardingPoint?.lng ?? ""}
+                />
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-2">
             <label className="eyebrow" htmlFor="guideName">
               {t("overview.guideName")}

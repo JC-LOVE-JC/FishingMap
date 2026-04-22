@@ -1,4 +1,5 @@
 import type {
+  BoardingPoint,
   BoatInfo,
   Destination,
   DestinationStatus,
@@ -112,6 +113,10 @@ export function formatLocation(
   destination: Pick<Destination, "city" | "country" | "region">
 ) {
   return [destination.city, destination.region, destination.country].filter(Boolean).join(", ");
+}
+
+export function buildGoogleMapsPointUrl(lat: number, lng: number) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${lat},${lng}`)}`;
 }
 
 export function formatDateRange(
@@ -280,6 +285,11 @@ export function createEmptyDestination(lat = 6, lng = 12): Destination {
       name: "",
       contact: ""
     },
+    boardingPoint: {
+      name: "",
+      lat: undefined,
+      lng: undefined
+    },
     boatInfo: {
       boatName: "",
       length: "",
@@ -333,6 +343,7 @@ export function normalizeDestination(destination: Destination): Destination {
     techniques: destination.techniques ?? [],
     tags: destination.tags ?? [],
     guideInfo: normalizeGuideInfo(destination.guideInfo),
+    boardingPoint: normalizeBoardingPoint(destination.boardingPoint),
     boatInfo: normalizeBoatInfo(destination.boatInfo),
     photos: (destination.photos ?? []).filter((photo) => photo.url.trim().length > 0),
     rating: destination.rating ?? 4,
@@ -344,6 +355,14 @@ function normalizeGuideInfo(guideInfo?: GuideInfo): GuideInfo {
   return {
     name: guideInfo?.name ?? "",
     contact: guideInfo?.contact ?? ""
+  };
+}
+
+function normalizeBoardingPoint(boardingPoint?: BoardingPoint): BoardingPoint {
+  return {
+    name: boardingPoint?.name ?? "",
+    lat: typeof boardingPoint?.lat === "number" ? boardingPoint.lat : undefined,
+    lng: typeof boardingPoint?.lng === "number" ? boardingPoint.lng : undefined
   };
 }
 
